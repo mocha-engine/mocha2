@@ -26,3 +26,19 @@ jobs:
 
     - name: Test
       run: dotnet test --no-build --verbosity normal source/mocha.sln
+
+    - name: Build Success
+      uses: rjstone/discord-webhook-notify@v1
+      if: success()
+      with:
+          severity: info
+          details: Build Finished
+          webhookUrl: ${{ secrets.CI_DISCORD_WEBHOOK_PUBLIC }}
+    
+    - name: Build Failure
+      uses: rjstone/discord-webhook-notify@v1
+      if: failure()
+      with:
+          severity: error
+          details: Build Failed
+          webhookUrl: ${{ secrets.CI_DISCORD_WEBHOOK_PUBLIC }}

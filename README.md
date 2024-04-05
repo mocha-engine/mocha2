@@ -1,5 +1,5 @@
 <p align="center">
-    <img src="https://user-images.githubusercontent.com/12881812/210671438-4d622459-fc1b-4164-ba8a-932dd2926524.png" />
+    <img src="https://github.com/mocha-engine/mocha2/assets/12881812/21c0706a-9aee-4214-8a70-02d30279f441" />
     <br>
     <a href="https://discord.gg/brHSFvq4"><img alt="Discord" src="https://img.shields.io/discord/1051715074043150336"></a>
     <a href="https://github.com/mocha-engine/mocha2/issues"><img alt="GitHub issues" src="https://img.shields.io/github/issues/mocha-engine/mocha2"></a>

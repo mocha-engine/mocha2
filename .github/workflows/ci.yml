@@ -34,6 +34,7 @@ jobs:
           severity: info
           details: Build Finished
           webhookUrl: ${{ secrets.CI_DISCORD_WEBHOOK_PUBLIC }}
+          description: Build finished.
     
     - name: Build Failure
       uses: rjstone/discord-webhook-notify@v1
@@ -42,3 +43,4 @@ jobs:
           severity: error
           details: Build Failed
           webhookUrl: ${{ secrets.CI_DISCORD_WEBHOOK_PUBLIC }}
+          description: Build failed!

@@ -32,7 +32,6 @@ jobs:
       if: success()
       with:
           severity: info
-          details: Build Finished
           webhookUrl: ${{ secrets.CI_DISCORD_WEBHOOK_PUBLIC }}
           description: Build finished.
     
@@ -41,6 +40,5 @@ jobs:
       if: failure()
       with:
           severity: error
-          details: Build Failed
           webhookUrl: ${{ secrets.CI_DISCORD_WEBHOOK_PUBLIC }}
           description: Build failed!

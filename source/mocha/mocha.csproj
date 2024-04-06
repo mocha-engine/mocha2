@@ -20,6 +20,9 @@
   </ItemGroup>
 
   <ItemGroup>
+    <ProjectReference Include="..\mocha.common\mocha.common.csproj" />
+  </ItemGroup>
+  <ItemGroup>
     <None Update="Shaders\frag.glsl">
       <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
     </None>

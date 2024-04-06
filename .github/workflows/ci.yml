@@ -47,7 +47,10 @@ jobs:
       with:
         name: build-output
         path: C:\temp\build
-        
+
+  deployToSteam:
+    runs-on: ubuntu-latest
+    steps:       
     - name: Upload to steam
       uses: game-ci/steam-deploy@v3
       with:

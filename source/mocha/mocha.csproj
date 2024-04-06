@@ -1,37 +1,41 @@
 ﻿<Project Sdk="Microsoft.NET.Sdk">
 
-  <PropertyGroup>
-    <OutputType>Library</OutputType>
-    <TargetFramework>net8.0</TargetFramework>
-    <ImplicitUsings>enable</ImplicitUsings>
-    <Nullable>enable</Nullable>
-	<AllowUnsafeBlocks>true</AllowUnsafeBlocks>
-	<RootNamespace>Mocha</RootNamespace>
-  </PropertyGroup>
+	<PropertyGroup>
+		<OutputType>Library</OutputType>
+		<TargetFramework>net8.0</TargetFramework>
+		<ImplicitUsings>enable</ImplicitUsings>
+		<Nullable>enable</Nullable>
+		<AllowUnsafeBlocks>true</AllowUnsafeBlocks>
+		<RootNamespace>Mocha</RootNamespace>
+	</PropertyGroup>
 
-  <ItemGroup>
-    <PackageReference Include="FlexLayoutSharp" Version="1.0.0" />
-    <PackageReference Include="Silk.NET.Maths" Version="2.20.0" />
-    <PackageReference Include="Silk.NET.Vulkan" Version="2.20.0" />
-    <PackageReference Include="Silk.NET.Vulkan.Extensions.EXT" Version="2.20.0" />
-    <PackageReference Include="Silk.NET.Vulkan.Extensions.KHR" Version="2.20.0" />
-    <PackageReference Include="Silk.NET.Windowing" Version="2.20.0" />
-    <PackageReference Include="SixLabors.ImageSharp" Version="3.1.3" />
-    <PackageReference Include="Veldrid.RenderDoc" Version="1.0.1" />
-    <PackageReference Include="Veldrid.SPIRV" Version="1.0.15" />
-  </ItemGroup>
+	<ItemGroup>
+		<PackageReference Include="FlexLayoutSharp" Version="1.0.0" />
+		<PackageReference Include="Silk.NET.Maths" Version="2.20.0" />
+		<PackageReference Include="Silk.NET.Vulkan" Version="2.20.0" />
+		<PackageReference Include="Silk.NET.Vulkan.Extensions.EXT" Version="2.20.0" />
+		<PackageReference Include="Silk.NET.Vulkan.Extensions.KHR" Version="2.20.0" />
+		<PackageReference Include="Silk.NET.Windowing" Version="2.20.0" />
+		<PackageReference Include="SixLabors.ImageSharp" Version="3.1.3" />
+		<PackageReference Include="Veldrid.RenderDoc" Version="1.0.1" />
+		<PackageReference Include="Veldrid.SPIRV" Version="1.0.15" />
+	</ItemGroup>
 
-  <ItemGroup>
-    <ProjectReference Include="..\mocha.common\mocha.common.csproj" />
-  </ItemGroup>
+	<ItemGroup>
+		<ProjectReference Include="..\mocha.common\mocha.common.csproj" />
+	</ItemGroup>
 
-  <ItemGroup>
-    <None Update="Shaders\frag.glsl">
-      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
-    </None>
-    <None Update="Shaders\vert.glsl">
-      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
-    </None>
-  </ItemGroup>
+	<ItemGroup>
+		<None Update="Shaders\frag.glsl">
+			<CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+		</None>
+		<None Update="Shaders\vert.glsl">
+			<CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+		</None>
+	</ItemGroup>
+
+	<ItemGroup>
+		<ProjectReference Include="..\mocha.generators\mocha.generators.csproj" OutputItemType="Analyzer" ReferenceOutputAssembly="false" />
+	</ItemGroup>
 
 </Project>

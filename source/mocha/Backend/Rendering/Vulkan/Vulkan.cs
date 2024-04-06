@@ -3,10 +3,8 @@ using Silk.NET.Core.Native;
 using Silk.NET.Vulkan;
 using Silk.NET.Vulkan.Extensions.EXT;
 using Silk.NET.Vulkan.Extensions.KHR;
-using System.Drawing;
 using System.Runtime.CompilerServices;
 using System.Runtime.InteropServices;
-
 using Buffer = Silk.NET.Vulkan.Buffer;
 using Semaphore = Silk.NET.Vulkan.Semaphore;
 
@@ -19,7 +17,7 @@ internal struct SwapchainDetails
 	public PresentModeKHR[] PresentModes;
 }
 
-internal unsafe class VulkanBackend : IRenderingBackend
+internal unsafe partial class VulkanBackend : IRenderingBackend
 {
 	private Window? _window;
 
@@ -31,12 +29,17 @@ internal unsafe class VulkanBackend : IRenderingBackend
 	private ExtDebugUtils? _debugUtils;
 	private DebugUtilsMessengerEXT _debugMessenger;
 
+	[WithProperty]
 	private PhysicalDevice _physicalDevice;
 
+	[WithProperty]
 	private Device _device;
+
+	[WithProperty( "Queue" )]
 	private Queue _graphicsQueue;
 	private Queue _presentQueue;
 
+	[WithProperty]
 	private Vk? _vk;
 
 	private const int MaxFramesInFlight = 2;
@@ -52,6 +55,7 @@ internal unsafe class VulkanBackend : IRenderingBackend
 
 	private Semaphore[]? _imageAvailableSemaphores;
 	private Semaphore[]? _renderFinishedSemaphores;
+
 	private Fence[]? _inFlightFences;
 	private Fence[]? _imagesInFlight;
 	private int _currentFrame = 0;
@@ -61,6 +65,10 @@ internal unsafe class VulkanBackend : IRenderingBackend
 
 	private Buffer _indexBuffer;
 	private DeviceMemory _indexBufferMemory;
+
+	private uint _graphicsQueueFamily;
+
+	private Dictionary<int, CommandContext> _threadedCommandContexts = new();
 
 	// Rectangle
 	private Vertex[] _vertices = new Vertex[]
@@ -82,7 +90,7 @@ internal unsafe class VulkanBackend : IRenderingBackend
 		"VK_LAYER_KHRONOS_validation"
 	};
 
-	private readonly string[] deviceExtensions = new[]
+	private readonly string[] _deviceExtensions = new[]
 	{
 		KhrSwapchain.ExtensionName
 	};
@@ -94,8 +102,15 @@ internal unsafe class VulkanBackend : IRenderingBackend
 	private Format _swapchainImageFormat;
 	private Extent2D _swapchainExtent;
 
-	public VulkanBackend( Window window )
+	private Veldrid.RenderDoc? _renderDoc;
+
+	[Obsolete]
+	public CommandBuffer CommandBuffer => _commandBuffers[_currentFrame];
+
+	public VulkanBackend( Window window, Veldrid.RenderDoc renderDoc )
 	{
+		_renderDoc = renderDoc;
+
 		if ( window.VkSurface is null )
 		{
 			throw new Exception( "Window has no Vulkan surface" );
@@ -106,6 +121,9 @@ internal unsafe class VulkanBackend : IRenderingBackend
 		_window = window;
 		_vk = Vk.GetApi();
 
+		//
+		// Setup
+		//
 		InitInstance();
 		InitSurface();
 
@@ -119,15 +137,21 @@ internal unsafe class VulkanBackend : IRenderingBackend
 		InitGraphicsPipeline();
 		InitFramebuffers();
 
-		InitVertexBuffer();
-		InitIndexBuffer();
-
 		InitCommandPool();
 		InitCommandBuffers();
 
 		InitSyncObjects();
 
+		InitVertexBuffer();
+		InitIndexBuffer();
+
+		RecordCommandBuffers();
+
+		//
+		// Register events for window
+		//
 		_window!.Render += DrawFrame;
+		_window!.OnResize += ResizeSwapchain;
 
 		Log.Trace( "Initialized Vulkan" );
 
@@ -139,7 +163,7 @@ internal unsafe class VulkanBackend : IRenderingBackend
 		_vk!.DeviceWaitIdle( _device );
 	}
 
-	private void VkCheck( Result result )
+	public static void VkCheck( Result result )
 	{
 		if ( result != Result.Success )
 		{
@@ -153,9 +177,9 @@ internal unsafe class VulkanBackend : IRenderingBackend
 		var appInfo = new ApplicationInfo()
 		{
 			SType = StructureType.ApplicationInfo,
-			PApplicationName = (byte*)Marshal.StringToHGlobalAnsi( "Frappe App" ),
+			PApplicationName = (byte*)Marshal.StringToHGlobalAnsi( "Mocha App" ),
 			ApplicationVersion = new Version32( 1, 0, 0 ),
-			PEngineName = (byte*)Marshal.StringToHGlobalAnsi( "Frappe App Framework" ),
+			PEngineName = (byte*)Marshal.StringToHGlobalAnsi( "Mocha App Framework" ),
 			EngineVersion = new Version32( 1, 0, 0 ),
 			ApiVersion = Vk.Version13
 		};
@@ -248,8 +272,8 @@ internal unsafe class VulkanBackend : IRenderingBackend
 			PQueueCreateInfos = queueCreateInfos,
 			PEnabledFeatures = &deviceFeatures,
 
-			EnabledExtensionCount = (uint)deviceExtensions.Length,
-			PpEnabledExtensionNames = (byte**)SilkMarshal.StringArrayToPtr( deviceExtensions )
+			EnabledExtensionCount = (uint)_deviceExtensions.Length,
+			PpEnabledExtensionNames = (byte**)SilkMarshal.StringArrayToPtr( _deviceExtensions )
 		};
 
 		createInfo.EnabledLayerCount = (uint)_requiredValidationLayers.Length;
@@ -349,7 +373,7 @@ internal unsafe class VulkanBackend : IRenderingBackend
 		}
 
 		var availableExtensionNames = availableExtensions.Select( extension => Marshal.PtrToStringAnsi( (IntPtr)extension.ExtensionName ) ).ToHashSet();
-		return deviceExtensions.All( availableExtensionNames.Contains );
+		return _deviceExtensions.All( availableExtensionNames.Contains );
 	}
 
 	private void InitSurface()
@@ -428,6 +452,8 @@ internal unsafe class VulkanBackend : IRenderingBackend
 		};
 
 		var indices = FindQueueFamilies( _physicalDevice );
+		_graphicsQueueFamily = indices.GraphicsFamily!.Value;
+
 		var queueFamilyIndices = stackalloc[] { indices.GraphicsFamily!.Value, indices.PresentFamily!.Value };
 
 		if ( indices.GraphicsFamily != indices.PresentFamily )
@@ -450,7 +476,7 @@ internal unsafe class VulkanBackend : IRenderingBackend
 			CompositeAlpha = CompositeAlphaFlagsKHR.OpaqueBitKhr,
 			PresentMode = presentMode,
 			Clipped = true,
-			OldSwapchain = default
+			OldSwapchain = _swapchain
 		};
 
 		if ( !_vk!.TryGetDeviceExtension( _instance, _device, out _khrSwapchain ) )
@@ -749,35 +775,83 @@ internal unsafe class VulkanBackend : IRenderingBackend
 
 	private void InitVertexBuffer()
 	{
-		BufferCreateInfo bufferInfo = new()
+		Buffer stagingBuffer;
+		DeviceMemory stagingBufferMemory;
+
+		var bufferSize = (ulong)(sizeof( Vertex ) * _vertices.Length);
+
+		//
+		// Alloc & create staging buffer
+		//
+		BufferCreateInfo stagingBufferInfo = new()
 		{
 			SType = StructureType.BufferCreateInfo,
-			Size = (ulong)(sizeof( Vertex ) * _vertices.Length),
-			Usage = BufferUsageFlags.VertexBufferBit,
+			Size = bufferSize,
+			Usage = BufferUsageFlags.TransferSrcBit,
+			SharingMode = SharingMode.Exclusive,
+		};
+
+		Buffer* stagingBufferPtr = &stagingBuffer;
+		if ( _vk!.CreateBuffer( _device, stagingBufferInfo, null, stagingBufferPtr ) != Result.Success )
+		{
+			throw new Exception( "Failed to create staging buffer for vertices" );
+		}
+
+		MemoryRequirements stagingMemRequirements;
+		_vk!.GetBufferMemoryRequirements( _device, stagingBuffer, out stagingMemRequirements );
+
+		MemoryAllocateInfo stagingAllocInfo = new()
+		{
+			SType = StructureType.MemoryAllocateInfo,
+			AllocationSize = stagingMemRequirements.Size,
+			MemoryTypeIndex = FindMemoryType( stagingMemRequirements.MemoryTypeBits, MemoryPropertyFlags.HostVisibleBit | MemoryPropertyFlags.HostCoherentBit ),
+		};
+
+		DeviceMemory* stagingBufferMemoryPtr = &stagingBufferMemory;
+		if ( _vk!.AllocateMemory( _device, stagingAllocInfo, null, stagingBufferMemoryPtr ) != Result.Success )
+		{
+			throw new Exception( "failed to allocate vertex buffer memory!" );
+		}
+
+		_vk!.BindBufferMemory( _device, stagingBuffer, stagingBufferMemory, 0 );
+
+		void* stagingData;
+		_vk!.MapMemory( _device, stagingBufferMemory, 0, stagingBufferInfo.Size, 0, &stagingData );
+		_vertices.AsSpan().CopyTo( new Span<Vertex>( stagingData, _vertices.Length ) );
+		_vk!.UnmapMemory( _device, stagingBufferMemory );
+
+		//
+		// Alloc and create vertex buffer
+		//
+		BufferCreateInfo vertexBufferInfo = new()
+		{
+			SType = StructureType.BufferCreateInfo,
+			Size = bufferSize,
+			Usage = BufferUsageFlags.VertexBufferBit | BufferUsageFlags.TransferDstBit,
 			SharingMode = SharingMode.Exclusive,
 		};
 
 		fixed ( Buffer* vertexBufferPtr = &_vertexBuffer )
 		{
-			if ( _vk!.CreateBuffer( _device, bufferInfo, null, vertexBufferPtr ) != Result.Success )
+			if ( _vk!.CreateBuffer( _device, vertexBufferInfo, null, vertexBufferPtr ) != Result.Success )
 			{
-				throw new Exception( "failed to create vertex buffer!" );
+				throw new Exception( "Failed to create staging buffer for vertices" );
 			}
 		}
 
-		MemoryRequirements memRequirements = new();
-		_vk!.GetBufferMemoryRequirements( _device, _vertexBuffer, out memRequirements );
+		MemoryRequirements vertexMemRequirements;
+		_vk!.GetBufferMemoryRequirements( _device, _vertexBuffer, out vertexMemRequirements );
 
-		MemoryAllocateInfo allocateInfo = new()
+		MemoryAllocateInfo vertexAllocInfo = new()
 		{
 			SType = StructureType.MemoryAllocateInfo,
-			AllocationSize = memRequirements.Size,
-			MemoryTypeIndex = FindMemoryType( memRequirements.MemoryTypeBits, MemoryPropertyFlags.HostVisibleBit | MemoryPropertyFlags.HostCoherentBit ),
+			AllocationSize = vertexMemRequirements.Size,
+			MemoryTypeIndex = FindMemoryType( vertexMemRequirements.MemoryTypeBits, MemoryPropertyFlags.DeviceLocalBit ),
 		};
 
 		fixed ( DeviceMemory* vertexBufferMemoryPtr = &_vertexBufferMemory )
 		{
-			if ( _vk!.AllocateMemory( _device, allocateInfo, null, vertexBufferMemoryPtr ) != Result.Success )
+			if ( _vk!.AllocateMemory( _device, vertexAllocInfo, null, vertexBufferMemoryPtr ) != Result.Success )
 			{
 				throw new Exception( "failed to allocate vertex buffer memory!" );
 			}
@@ -785,10 +859,19 @@ internal unsafe class VulkanBackend : IRenderingBackend
 
 		_vk!.BindBufferMemory( _device, _vertexBuffer, _vertexBufferMemory, 0 );
 
-		void* data;
-		_vk!.MapMemory( _device, _vertexBufferMemory, 0, bufferInfo.Size, 0, &data );
-		_vertices.AsSpan().CopyTo( new Span<Vertex>( data, _vertices.Length ) );
-		_vk!.UnmapMemory( _device, _vertexBufferMemory );
+		//
+		// Copy
+		//
+		var stb = stagingBuffer;
+		ImmediateSubmit( cmd =>
+		{
+			BufferCopy copy;
+			copy.SrcOffset = 0;
+			copy.DstOffset = 0;
+			copy.Size = bufferSize;
+
+			_vk.CmdCopyBuffer( cmd, stb, _vertexBuffer, 1, copy );
+		} );
 	}
 
 	private void InitIndexBuffer()
@@ -864,8 +947,11 @@ internal unsafe class VulkanBackend : IRenderingBackend
 		{
 			VkCheck( _vk!.AllocateCommandBuffers( _device, allocInfo, commandBuffersPtr ) );
 		}
+	}
 
-		for ( int i = 0; i < _commandBuffers.Length; i++ )
+	private void RecordCommandBuffers()
+	{
+		for ( int i = 0; i < _commandBuffers!.Length; i++ )
 		{
 			CommandBufferBeginInfo beginInfo = new()
 			{
@@ -878,7 +964,7 @@ internal unsafe class VulkanBackend : IRenderingBackend
 			{
 				SType = StructureType.RenderPassBeginInfo,
 				RenderPass = _renderPass,
-				Framebuffer = _swapchainFramebuffers[i],
+				Framebuffer = _swapchainFramebuffers![i],
 				RenderArea =
 				{
 					Offset = { X = 0, Y = 0 },
@@ -944,6 +1030,8 @@ internal unsafe class VulkanBackend : IRenderingBackend
 
 	private void DrawFrame( double delta )
 	{
+		_renderDoc?.StartFrameCapture();
+
 		_vk!.WaitForFences( _device, 1, _inFlightFences![_currentFrame], true, ulong.MaxValue );
 
 		uint imageIndex = 0;
@@ -953,6 +1041,7 @@ internal unsafe class VulkanBackend : IRenderingBackend
 		{
 			_vk!.WaitForFences( _device, 1, _imagesInFlight[imageIndex], true, ulong.MaxValue );
 		}
+
 		_imagesInFlight[imageIndex] = _inFlightFences[_currentFrame];
 
 		SubmitInfo submitInfo = new()
@@ -1000,9 +1089,20 @@ internal unsafe class VulkanBackend : IRenderingBackend
 			PImageIndices = &imageIndex
 		};
 
-		VkCheck( _khrSwapchain.QueuePresent( _presentQueue, presentInfo ) );
+		var presentResult = _khrSwapchain.QueuePresent( _presentQueue, presentInfo );
+		if ( presentResult == Result.ErrorOutOfDateKhr )
+		{
+			Log.Warning( $"Swapchain was out of date, forcing new swapchain creation" );
+			ResizeSwapchain();
+		}
+		else if ( presentResult != Result.Success )
+		{
+			throw new Exception( $"Got {presentResult} while trying to queue an image for presentation" );
+		}
 
 		_currentFrame = (_currentFrame + 1) % MaxFramesInFlight;
+
+		_renderDoc?.EndFrameCapture();
 	}
 
 	private ShaderModule CreateShaderModule( byte[] code )
@@ -1113,7 +1213,7 @@ internal unsafe class VulkanBackend : IRenderingBackend
 		return details;
 	}
 
-	public void DrawRect( RectangleF rect )
+	public void DrawRect( System.Drawing.RectangleF rect )
 	{
 		throw new NotImplementedException();
 	}
@@ -1129,5 +1229,114 @@ internal unsafe class VulkanBackend : IRenderingBackend
 		_vk!.Dispose();
 
 		Log.Trace( "Cleaned up Vulkan" );
+	}
+
+	private void ResizeSwapchain()
+	{
+		InitSwapchain();
+		InitImageViews();
+
+		InitRenderPass();
+		InitGraphicsPipeline();
+		InitFramebuffers();
+
+		InitCommandBuffers();
+	}
+
+	public void ImmediateSubmit( Action<CommandBuffer> func )
+	{
+		var ctx = GetUploadContext( Thread.CurrentThread.ManagedThreadId );
+
+		var cmd = ctx.CommandBuffer;
+		var beginInfo = new CommandBufferBeginInfo
+		{
+			SType = StructureType.CommandBufferBeginInfo,
+			PNext = null,
+			PInheritanceInfo = null,
+			Flags = CommandBufferUsageFlags.OneTimeSubmitBit
+		};
+
+		VkCheck( _vk!.BeginCommandBuffer( cmd, beginInfo ) );
+
+		func( cmd );
+
+		VkCheck( _vk!.EndCommandBuffer( cmd ) );
+
+		var submitInfo = new SubmitInfo
+		{
+			SType = StructureType.SubmitInfo,
+			PNext = null,
+			WaitSemaphoreCount = 0,
+			PWaitSemaphores = null,
+			PWaitDstStageMask = null,
+			CommandBufferCount = 1,
+			PCommandBuffers = &cmd,
+			SignalSemaphoreCount = 0,
+			PSignalSemaphores = null
+		};
+
+		VkCheck( _vk!.QueueWaitIdle( _graphicsQueue ) );
+		VkCheck( _vk!.QueueSubmit( _graphicsQueue, 1, &submitInfo, ctx.Fence ) );
+
+		VkCheck( _vk!.WaitForFences( _device, new[] { ctx.Fence }, true, 9999999999 ) );
+		VkCheck( _vk!.ResetFences( _device, 1, new[] { ctx.Fence } ) );
+
+		_vk!.ResetCommandPool( _device, ctx.CommandPool, 0 );
+	}
+
+	private CommandContext GetUploadContext( int threadId )
+	{
+		if ( _threadedCommandContexts.TryGetValue( threadId, out var val ))
+		{
+			return val;
+		}
+
+		var ctx = new CommandContext( this );
+		_threadedCommandContexts.Add( threadId, ctx );
+		return ctx;
+	}
+
+	struct CommandContext
+	{
+		public CommandPool CommandPool;
+		public CommandBuffer CommandBuffer;
+		public Fence Fence;
+
+		public CommandContext( VulkanBackend parent )
+		{
+			var poolInfo = new CommandPoolCreateInfo
+			{
+				SType = StructureType.CommandPoolCreateInfo,
+				PNext = null,
+				QueueFamilyIndex = parent._graphicsQueueFamily,
+				Flags = CommandPoolCreateFlags.ResetCommandBufferBit
+			};
+
+			VkCheck( parent.Vk!.CreateCommandPool( parent.Device, poolInfo, null, out var commandPool ) );
+
+			var allocInfo = new CommandBufferAllocateInfo
+			{
+				SType = StructureType.CommandBufferAllocateInfo,
+				PNext = null,
+				CommandPool = commandPool,
+				CommandBufferCount = 1,
+				Level = CommandBufferLevel.Primary
+			};
+
+			VkCheck( parent.Vk!.AllocateCommandBuffers( parent.Device, allocInfo, out var commandBuffer ) );
+
+			var fenceInfo = new FenceCreateInfo
+			{
+				SType = StructureType.FenceCreateInfo,
+				PNext = null,
+				Flags = FenceCreateFlags.SignaledBit
+			};
+
+			VkCheck( parent.Vk!.CreateFence( parent.Device, fenceInfo, null, out var fence ) );
+
+			CommandBuffer = commandBuffer;
+			CommandPool = commandPool;
+			Fence = fence;
+		}
 	}
 }

@@ -19,7 +19,7 @@ public class MochaApp
 		var platformInfo = CurrentPlatformInfo.Current();
 
 		using var window = new Window( platformInfo, _name, _width, _height );
-		using var renderer = new VulkanBackend( window );
+		using var renderer = new VulkanBackend( window, null );
 
 		window.Run();
 	}

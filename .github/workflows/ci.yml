@@ -32,7 +32,7 @@ jobs:
       with:
           severity: info
           webhookUrl: ${{ secrets.CI_DISCORD_WEBHOOK_PUBLIC }}
-          description: Build finished.
+          description: "Windows: build success"
     
     - name: Build Failure
       uses: rjstone/discord-webhook-notify@v1
@@ -40,7 +40,7 @@ jobs:
       with:
           severity: error
           webhookUrl: ${{ secrets.CI_DISCORD_WEBHOOK_PUBLIC }}
-          description: Build failed!
+          description: "Windows: build failed"
 
     - name: Upload Artifacts
       uses: actions/upload-artifact@v3

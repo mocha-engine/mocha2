@@ -66,5 +66,5 @@ jobs:
         appId: 2280950
         buildDescription: ${{ github.sha }}
         rootPath: build
+        depot1Path: .
         releaseBranch: prerelease
-        firstDepotIdOverride: 2280951

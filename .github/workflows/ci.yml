@@ -8,7 +8,6 @@ on:
 
 jobs:
   build:
-
     runs-on: windows-latest
 
     steps:
@@ -22,7 +21,7 @@ jobs:
       run: dotnet restore source/mocha.sln
 
     - name: Build
-      run: dotnet publish --output "C:\temp\build" -c Release -r win-x64
+      run: dotnet publish --output "C:\temp\build" -c Release -r win-x64 source/mocha.sln
 
     - name: Test
       run: dotnet test --no-build --verbosity normal source/mocha.sln
@@ -48,3 +47,14 @@ jobs:
       with:
         name: build-output
         path: C:\temp\build
+        
+    - name: Upload to steam
+      uses: game-ci/steam-deploy@v3
+      with:
+        username: ${{ secrets.STEAM_USERNAME }}          
+        configVdf: ${{ secrets.STEAM_CONFIG_VDF }}          
+        appId: 2280950
+        buildDescription: ${{ github.sha }}
+        rootPath: build
+        depot1Path: StandaloneWindows64
+        releaseBranch: prerelease

@@ -6,6 +6,9 @@ public static class MathX
 	public static int FloorToInt( this float x ) => (int)Math.Floor( x );
 	public static int RoundToInt( this float x ) => (int)Math.Round( x );
 
+	public static float DegreesToRadians( this float degrees ) => degrees * 0.0174533f;
+	public static float RadiansToDegrees( this float radians ) => radians * 57.2958f;
+
 	public static float Clamp( this float v, float min, float max )
 	{
 		if ( min > max )

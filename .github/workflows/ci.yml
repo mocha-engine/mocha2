@@ -57,6 +57,7 @@ jobs:
       with:
         name: build-output
         path: build
+    
     - name: Upload to steam
       uses: game-ci/steam-deploy@v3
       with:
@@ -65,5 +66,4 @@ jobs:
         appId: 2280950
         buildDescription: ${{ github.sha }}
         rootPath: build
-        depot1Path: StandaloneWindows64
         releaseBranch: prerelease

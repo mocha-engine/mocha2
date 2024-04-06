@@ -51,7 +51,12 @@ jobs:
   deployToSteam:
     runs-on: ubuntu-latest
     needs: build
-    steps:       
+    steps:
+    - name: Download Artifacts
+      uses: actions/download-artifact@v3
+      with:
+        name: build-output
+        path: build
     - name: Upload to steam
       uses: game-ci/steam-deploy@v3
       with:

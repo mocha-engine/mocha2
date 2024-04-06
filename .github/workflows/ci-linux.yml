@@ -41,6 +41,7 @@ jobs:
           severity: error
           webhookUrl: ${{ secrets.CI_DISCORD_WEBHOOK_PUBLIC }}
           description: "Linux: build failed"
+          text: "https://tenor.com/view/conductor-we-have-a-problem-cat-cute-funny-gif-17168115721186324165"
 
     - name: Upload Artifacts
       uses: actions/upload-artifact@v3

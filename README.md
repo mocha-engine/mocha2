@@ -3,6 +3,9 @@
     <br>
     <a href="https://discord.gg/brHSFvq4"><img alt="Discord" src="https://img.shields.io/discord/1051715074043150336"></a>
     <a href="https://github.com/mocha-engine/mocha2/issues"><img alt="GitHub issues" src="https://img.shields.io/github/issues/mocha-engine/mocha2"></a>
+    <br>
+    <img src="https://github.com/mocha-engine/mocha2/actions/workflows/ci.yml/badge.svg" />
+    <img src="https://github.com/mocha-engine/mocha2/actions/workflows/ci-linux.yml/badge.svg" />
 </p>
 
 Mocha 2 is the next generation game engine building on the success of its predecessor, Mocha. This version introduces enhanced graphics capabilities and broader platform support.

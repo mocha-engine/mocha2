@@ -1,0 +1,9 @@
+{
+	"Model": "/environment/test.fbx",
+	"Materials": [
+		{
+			"Name": "test",
+			"Path": "/environment/floor/floor.material"
+		}
+	]
+}

@@ -2,6 +2,7 @@
 
 namespace Mocha.Rendering;
 
+[Obsolete]
 internal interface IRenderingBackend : IDisposable
 {
 	public static IRenderingBackend Current { get; set; }

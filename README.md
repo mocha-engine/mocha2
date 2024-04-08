@@ -8,7 +8,7 @@
     <img src="https://github.com/mocha-engine/mocha2/actions/workflows/ci-linux.yml/badge.svg" />
 </p>
 
-Mocha 2 is the next generation game engine building on the success of its predecessor, Mocha. This version introduces enhanced graphics capabilities and broader platform support.
+Mocha is a software framework.
 
 ## Building the Engine
 
@@ -16,7 +16,7 @@ TODO
 
 ## Contributing
 
-We welcome contributions! To contribute to Mocha 2, please:
+We welcome contributions! To contribute to Mocha, please:
 
 1. Fork the repository.
 2. Create a branch named `YourName/FeatureName` for your feature or fix.
@@ -29,7 +29,7 @@ Encounter a bug or have a feature request? [Open an issue](https://github.com/mo
 ## License
 
 ```
-Mocha 2 Game Engine
+Mocha 2 Framework
 Copyright (C) 2023-2024 Mocha Contributors
 All Rights Reserved
 ```

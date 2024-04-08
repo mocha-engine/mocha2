@@ -23,6 +23,7 @@
 
 	<ItemGroup>
 		<ProjectReference Include="..\mocha.common\mocha.common.csproj" />
+		<ProjectReference Include="..\thirdparty\vmasharp\VMASharp.csproj" />
 	</ItemGroup>
 
 	<ItemGroup>
@@ -37,5 +38,10 @@
 	<ItemGroup>
 		<ProjectReference Include="..\mocha.generators\mocha.generators.csproj" OutputItemType="Analyzer" ReferenceOutputAssembly="false" />
 	</ItemGroup>
+
+	<ItemGroup>
+		<ProjectReference Include="..\mocha.generators\mocha.generators.csproj" OutputItemType="Analyzer" ReferenceOutputAssembly="false" />
+	</ItemGroup>
+
 
 </Project>

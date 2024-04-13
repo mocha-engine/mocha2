@@ -583,16 +583,10 @@ internal unsafe partial class VulkanBackend : IRenderingBackend
 
 	private void InitGraphicsPipeline()
 	{
-		var shaderSources = new VulkanShaderSources()
-		{
-			Vertex = "shaders/vert.glsl",
-			Fragment = "shaders/frag.glsl"
-		};
+		var shader = ShaderData.Load( "/shaders/default.shader" );
 
-		var (vertexData, fragmentData) = VulkanShaderCompiler.Compile( shaderSources );
-
-		var vertShaderModule = CreateShaderModule( vertexData );
-		var fragShaderModule = CreateShaderModule( fragmentData );
+		var vertShaderModule = CreateShaderModule( shader.VertexData );
+		var fragShaderModule = CreateShaderModule( shader.FragmentData );
 
 		PipelineShaderStageCreateInfo vertShaderStageInfo = new()
 		{
@@ -727,7 +721,7 @@ internal unsafe partial class VulkanBackend : IRenderingBackend
 				BasePipelineHandle = default
 			};
 
-			VkCheck( _vk!.CreateGraphicsPipelines( _device, default, 1, pipelineInfo, null, out _graphicsPipeline ) );
+			VkCheck( _vk!.CreateGraphicsPipelines( _device, default, 1, &pipelineInfo, null, out _graphicsPipeline ) );
 		}
 
 		_vk!.DestroyShaderModule( _device, fragShaderModule, null );
@@ -1105,19 +1099,19 @@ internal unsafe partial class VulkanBackend : IRenderingBackend
 		_renderDoc?.EndFrameCapture();
 	}
 
-	private ShaderModule CreateShaderModule( byte[] code )
+	private ShaderModule CreateShaderModule( uint[] code )
 	{
 		ShaderModuleCreateInfo createInfo = new()
 		{
 			SType = StructureType.ShaderModuleCreateInfo,
-			CodeSize = (nuint)code.Length,
+			CodeSize = (nuint)code.Length * sizeof( uint ),
 		};
 
 		ShaderModule shaderModule;
 
-		fixed ( byte* codePtr = code )
+		fixed ( uint* codePtr = code )
 		{
-			createInfo.PCode = (uint*)codePtr;
+			createInfo.PCode = codePtr;
 
 			VkCheck( _vk!.CreateShaderModule( _device, createInfo, null, out shaderModule ) );
 		}

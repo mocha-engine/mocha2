@@ -2,10 +2,12 @@
 
 internal interface IRenderContext
 {
-	protected bool HasInitialized { get; set; }
-	protected bool RenderingActive { get; set; }
+	public static IRenderContext Current { get; internal set; }
 
-	RenderStatus Startup();
+	bool HasInitialized { get; }
+	bool RenderingActive { get; }
+
+	RenderStatus Startup( Window window );
 	RenderStatus Shutdown();
 
 	/// <summary>
@@ -31,4 +33,38 @@ internal interface IRenderContext
 	/// </list>
 	/// </returns>
 	RenderStatus EndRendering();
+
+
+	RenderStatus CreateImageTexture( ImageTextureInfo info, out Handle handle );
+	RenderStatus CreateRenderTexture( RenderTextureInfo info, out Handle handle );
+	RenderStatus SetImageTextureData( Handle handle, TextureData textureData );
+	RenderStatus CopyImageTexture( Handle handle, TextureCopyData textureCopyData );
+	
+	RenderStatus CreateBuffer( BufferInfo info, out Handle handle );
+	RenderStatus CreateVertexBuffer( BufferInfo info, out Handle handle );
+	RenderStatus CreateIndexBuffer( BufferInfo info, out Handle handle );
+	RenderStatus UploadBuffer( Handle handle, BufferUploadInfo uploadInfo );
+
+	RenderStatus CreatePipeline( PipelineInfo info, out Handle handle );
+	RenderStatus CreateDescriptor( DescriptorInfo info, out Handle handle );
+	RenderStatus CreateShader( ShaderInfo info, out Handle handle );
+
+	RenderStatus BindPipeline( Pipeline p );
+	RenderStatus BindDescriptor( Descriptor d );
+
+	RenderStatus UpdateDescriptor( Descriptor d, DescriptorUpdateInfo updateInfo );
+	RenderStatus BindVertexBuffer( VertexBuffer vb );
+	RenderStatus BindIndexBuffer( IndexBuffer ib );
+
+	// RenderStatus BindConstants( RenderPushConstants p );
+
+	RenderStatus Draw( int vertexCount, int indexCount, int instanceCount );
+
+	RenderStatus BindRenderTarget( RenderTexture rt );
+	RenderStatus GetRenderSize( out Vector2 size );
+	RenderStatus GetGPUInfo( out GPUInfo info );
+
+	RenderStatus GetWindowSize( out Vector2 size );
+	void UpdateWindow();
+	bool GetWindowCloseRequested();
 }

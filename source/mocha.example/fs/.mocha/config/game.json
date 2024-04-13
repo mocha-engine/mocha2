@@ -1,0 +1,13 @@
+{
+    "Game": "Mocha Example Game",
+    "Title": "Mocha Example Title",
+    "FileSystem": {
+      "ExcludeDirs": [
+        "/materials/PBR"
+      ],
+      "MountPaths": {
+        "Content": "./fs/content/",
+        "Source": "./fs/src/"
+      }
+    }
+}

@@ -45,6 +45,15 @@ internal unsafe partial class VulkanRenderContext : IRenderContext
 
 	string[] _deviceExtensions = [KhrSwapchain.ExtensionName];
 
+	public HandleMap<VulkanBuffer> Buffers = new();
+	public HandleMap<VulkanImageTexture> ImageTextures = new();
+	public HandleMap<VulkanRenderTexture> RenderTextures = new();
+	public HandleMap<VulkanDescriptor> Descriptors = new();
+	public HandleMap<VulkanShader> Shaders = new();
+
+	public DescriptorPool DescriptorPool;
+	public uint GraphicsQueueFamily;
+
 	public static void VkCheck( Result result )
 	{
 		if ( result != Result.Success )
@@ -104,6 +113,121 @@ internal unsafe partial class VulkanRenderContext : IRenderContext
 		RenderingActive = false;
 
 		return RenderStatus.Ok;
+	}
+
+	public RenderStatus CreateImageTexture( ImageTextureInfo info, out Handle handle )
+	{
+		throw new NotImplementedException();
+	}
+
+	public RenderStatus CreateRenderTexture( RenderTextureInfo info, out Handle handle )
+	{
+		throw new NotImplementedException();
+	}
+
+	public RenderStatus SetImageTextureData( Handle handle, TextureData textureData )
+	{
+		throw new NotImplementedException();
+	}
+
+	public RenderStatus CopyImageTexture( Handle handle, TextureCopyData textureCopyData )
+	{
+		throw new NotImplementedException();
+	}
+
+	public RenderStatus CreateBuffer( BufferInfo info, out Handle handle )
+	{
+		throw new NotImplementedException();
+	}
+
+	public RenderStatus CreateVertexBuffer( BufferInfo info, out Handle handle )
+	{
+		throw new NotImplementedException();
+	}
+
+	public RenderStatus CreateIndexBuffer( BufferInfo info, out Handle handle )
+	{
+		throw new NotImplementedException();
+	}
+
+	public RenderStatus UploadBuffer( Handle handle, BufferUploadInfo uploadInfo )
+	{
+		throw new NotImplementedException();
+	}
+
+	public RenderStatus CreatePipeline( PipelineInfo info, out Handle handle )
+	{
+		throw new NotImplementedException();
+	}
+
+	public RenderStatus CreateDescriptor( DescriptorInfo info, out Handle handle )
+	{
+		throw new NotImplementedException();
+	}
+
+	public RenderStatus CreateShader( ShaderInfo info, out Handle handle )
+	{
+		throw new NotImplementedException();
+	}
+
+	public RenderStatus BindPipeline( Pipeline p )
+	{
+		throw new NotImplementedException();
+	}
+
+	public RenderStatus BindDescriptor( Descriptor d )
+	{
+		throw new NotImplementedException();
+	}
+
+	public RenderStatus UpdateDescriptor( Descriptor d, DescriptorUpdateInfo updateInfo )
+	{
+		throw new NotImplementedException();
+	}
+
+	public RenderStatus BindVertexBuffer( VertexBuffer vb )
+	{
+		throw new NotImplementedException();
+	}
+
+	public RenderStatus BindIndexBuffer( IndexBuffer ib )
+	{
+		throw new NotImplementedException();
+	}
+
+	public RenderStatus Draw( int vertexCount, int indexCount, int instanceCount )
+	{
+		throw new NotImplementedException();
+	}
+
+	public RenderStatus BindRenderTarget( RenderTexture rt )
+	{
+		throw new NotImplementedException();
+	}
+
+	public RenderStatus GetRenderSize( out Vector2 size )
+	{
+		throw new NotImplementedException();
+	}
+
+	public RenderStatus GetGPUInfo( out GPUInfo info )
+	{
+		throw new NotImplementedException();
+	}
+
+	public RenderStatus GetWindowSize( out Vector2 size )
+	{
+		throw new NotImplementedException();
+	}
+
+	public void UpdateWindow()
+	{
+		throw new NotImplementedException();
+	}
+
+	public bool GetWindowCloseRequested()
+	{
+		throw new NotImplementedException();
 	}
 
 	public RenderStatus Shutdown()
@@ -392,6 +516,6 @@ internal unsafe partial class VulkanRenderContext : IRenderContext
 
 	public void ImmediateSubmit( Func<CommandBuffer, RenderStatus> func )
 	{
-
+		// todo
 	}
 }

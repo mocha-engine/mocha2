@@ -1,6 +1,6 @@
 ﻿namespace Mocha.Rendering;
 
-internal class ImageTexture : RenderObject
+public class ImageTexture : RenderObject
 {
 	public ImageTexture( ImageTextureInfo info )
 	{

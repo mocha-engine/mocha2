@@ -14,7 +14,7 @@ public class Handle
 	public bool IsValid => Value != uint.MaxValue;
 }
 
-internal class RenderObject
+public class RenderObject
 {
 	public Handle Handle = Handle.Invalid;
 

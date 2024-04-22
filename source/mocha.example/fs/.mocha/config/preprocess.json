@@ -1,0 +1,8 @@
+[
+  {
+    "FileSystem": "Source",
+    "Folder": "/materials/PBR",
+    "Destination": "/materials",
+    "Preprocessor": "pbrconvert"
+  }
+]

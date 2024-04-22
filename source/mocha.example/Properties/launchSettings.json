@@ -1,0 +1,8 @@
+{
+  "profiles": {
+    "mocha.example": {
+      "commandName": "Project",
+      "workingDirectory": "$(SolutionDir)mocha.example\\"
+    }
+  }
+}

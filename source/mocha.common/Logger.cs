@@ -4,7 +4,10 @@ public class Logger
 {
 	static Logger()
 	{
-		Console.OutputEncoding = System.Text.Encoding.UTF8;
+		if ( !Console.IsOutputRedirected && Console.IsOutputRedirected )
+		{
+			Console.OutputEncoding = System.Text.Encoding.UTF8;
+		}
 	}
 
 	private object _threadLock = new();
@@ -57,9 +60,9 @@ public class Logger
 
 	private void WriteLogMessage( string level, object obj, string dateTime, string color )
 	{
-		WriteColoredString( DateColor, "" );
+		WriteColoredString( DateColor, "█");
 		WriteColoredString( InfoColor, $" {dateTime} ", DateColor );
-		WriteColoredString( DateColor, " " );
+		WriteColoredString( DateColor, "█ ");
 		WriteColoredString( color, $"{level,-12}{obj}\n" );
 
 		ResetColors();

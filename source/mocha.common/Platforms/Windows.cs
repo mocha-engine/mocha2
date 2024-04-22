@@ -27,7 +27,6 @@ public static class Windows
 
 	internal static void InitWindow( nint windowHandle )
 	{
-		Log.Trace( $"Windows.InitWindow: {windowHandle}" );
 		SetDarkModeForWindow( windowHandle );
 	}
 }

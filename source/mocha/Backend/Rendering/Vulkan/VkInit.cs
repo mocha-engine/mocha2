@@ -100,7 +100,7 @@ internal static unsafe class VKInit
 		return renderingAttachmentInfo;
 	}
 
-	public static RenderingInfo RenderingInfo( RenderingAttachmentInfo colorAttachmentInfo, RenderingAttachmentInfo depthAttachmentInfo, Extent2D extent )
+	public static RenderingInfo RenderingInfo( RenderingAttachmentInfo* colorAttachmentInfo, RenderingAttachmentInfo* depthAttachmentInfo, Extent2D extent )
 	{
 		var renderInfo = new RenderingInfo
 		{
@@ -108,9 +108,9 @@ internal static unsafe class VKInit
 			LayerCount = 1,
 			RenderArea = new Rect2D { Offset = new Offset2D(), Extent = extent },
 			ColorAttachmentCount = 1,
-			PColorAttachments = &colorAttachmentInfo, // Requires fixed or pinned
-			PDepthAttachment = &depthAttachmentInfo, // Requires fixed or pinned
-			PStencilAttachment = &depthAttachmentInfo // Requires fixed or pinned
+			PColorAttachments = colorAttachmentInfo,
+			PDepthAttachment = depthAttachmentInfo,
+			PStencilAttachment = depthAttachmentInfo
 		};
 
 		// Note: Directly pointing to structs like this requires unsafe code block or fixed size buffers.
@@ -119,32 +119,30 @@ internal static unsafe class VKInit
 		return renderInfo;
 	}
 
-	public static SubmitInfo SubmitInfo( CommandBuffer commandBuffer )
+	public static SubmitInfo SubmitInfo( CommandBuffer* commandBuffer )
 	{
 		var submitInfo = new SubmitInfo
 		{
 			SType = StructureType.SubmitInfo,
 			CommandBufferCount = 1,
-			PCommandBuffers = &commandBuffer // Requires fixed or pinned
+			PCommandBuffers = commandBuffer
 		};
 
-		// Note: Similar to RenderingInfo, managing pointers to structs like CommandBuffer requires unsafe code.
 		return submitInfo;
 	}
 
-	public static PresentInfoKHR PresentInfo( SwapchainKHR swapchain, Semaphore waitSemaphore, uint imageIndex )
+	public static PresentInfoKHR PresentInfo( SwapchainKHR* swapchain, Semaphore* waitSemaphore, uint imageIndex )
 	{
 		var presentInfo = new PresentInfoKHR
 		{
 			SType = StructureType.PresentInfoKhr,
 			SwapchainCount = 1,
-			PSwapchains = &swapchain, // Requires fixed or pinned
-			PWaitSemaphores = &waitSemaphore, // Requires fixed or pinned
+			PSwapchains = swapchain,
+			PWaitSemaphores = waitSemaphore,
 			WaitSemaphoreCount = 1,
-			PImageIndices = &imageIndex // Requires fixed or pinned
+			PImageIndices = &imageIndex
 		};
 
-		// Note: Handling pointers requires unsafe code blocks.
 		return presentInfo;
 	}
 

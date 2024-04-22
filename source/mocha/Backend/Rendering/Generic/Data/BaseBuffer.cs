@@ -9,6 +9,6 @@ internal class BaseBuffer : RenderObject
 
 	public void Upload( BufferUploadInfo uploadInfo )
 	{
-
+		IRenderContext.Current.UploadBuffer( Handle, uploadInfo );
 	}
 }

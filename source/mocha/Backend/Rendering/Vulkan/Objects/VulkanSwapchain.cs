@@ -167,7 +167,8 @@ internal unsafe class VulkanSwapchain : VulkanObject
 			var rt = new VulkanRenderTexture( Parent )
 			{
 				Image = image,
-				Format = surfaceFormat.Format
+				Format = surfaceFormat.Format,
+				Size = new Size2D( extent.Width, extent.Height )
 			};
 
 			Parent.Vk.CreateImageView( Parent.Device, new ImageViewCreateInfo

@@ -1,4 +1,5 @@
 ﻿using Mocha;
+using Mocha.Rendering;
 using Mocha.SceneSystem;
 
 using ( var app = new MochaApplication( "Mocha Example" ) )
@@ -26,5 +27,12 @@ using ( var app = new MochaApplication( "Mocha Example" ) )
 		//{
 		//	Position = new Vector3( 10, 10, 10 )
 		//};
+	};
+
+	app.MainLoop += () =>
+	{
+		//
+		// Main loop
+		//
 	};
 }

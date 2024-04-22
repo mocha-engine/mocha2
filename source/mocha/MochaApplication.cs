@@ -32,19 +32,24 @@ public class MochaApplication : IDisposable
 
 	private void Run()
 	{
-		if ( !Veldrid.RenderDoc.Load( "./renderdoc.dll", out var renderDoc ) )
+		if ( !Veldrid.RenderDoc.Load( out var renderDoc ) )
 		{
 			Log.Error( "Failed to initialize renderdoc" );
 		}
 
 		var platformInfo = CurrentPlatformInfo.Current();
-
 		IRenderContext.Current = new VulkanRenderContext();
 
 		using var window = new Window( platformInfo, _name, _width, _height );
-		IRenderContext.Current.Startup( window );
+		Render.Startup( window );
 
-		var vertices = new Vector3[] { new( 0, 0, 0 ), new( 1, 0, 0 ), new( 1, 1, 0 ), new( 0, 1, 0 ) };
+		var vertices = new float[] {
+			// vec2 pos,	vec3 color
+			-1, -1,			0, 0, 1,
+			1, -1,			0, 1, 1,
+			1, 1,			1, 1, 0,
+			-1, 1,			1, 0, 0
+		};
 		var indices = new uint[] { 0, 1, 2, 2, 3, 0 };
 
 		var vertexBuffer = new VertexBuffer( new BufferInfo()
@@ -65,7 +70,7 @@ public class MochaApplication : IDisposable
 
 		vertexBuffer.Upload( new BufferUploadInfo()
 		{
-			Data = vertices.Select( x => new float[] { x.X, x.Y, x.Z } ).SelectMany( x => x ).SelectMany( BitConverter.GetBytes ).ToArray()
+			Data = vertices.SelectMany( BitConverter.GetBytes ).ToArray()
 		} );
 
 		indexBuffer.Upload( new BufferUploadInfo()
@@ -73,11 +78,11 @@ public class MochaApplication : IDisposable
 			Data = indices.SelectMany( BitConverter.GetBytes ).ToArray()
 		} );
 
-		var descriptor = new Descriptor( new DescriptorInfo()
-		{
-			Bindings = new List<DescriptorBindingInfo>(),
-			Name = "My Descriptor"
-		} );
+		//var descriptor = new Descriptor( new DescriptorInfo()
+		//{
+		//	Bindings = new List<DescriptorBindingInfo>(),
+		//	Name = "My Descriptor"
+		//} );
 
 		var pipeline = new Pipeline( new PipelineInfo
 		{
@@ -89,24 +94,24 @@ public class MochaApplication : IDisposable
 			},
 
 			RenderToSwapchain = true,
-			Descriptors = [descriptor],
-			VertexAttributes = [new VertexAttributeInfo() { Format = VertexAttributeFormat.Float3 }]
+			// Descriptors = [descriptor],
+			VertexAttributes = [new VertexAttributeInfo() { Format = VertexAttributeFormat.Float2, Name = "Position" }, new VertexAttributeInfo() { Format = VertexAttributeFormat.Float3, Name = "Color" }]
 		} );
 
 		window.Render += ( dt ) =>
 		{
-			IRenderContext.Current.BeginRendering();
+			Render.BeginRendering();
 
-			IRenderContext.Current.BindPipeline( pipeline );
-			IRenderContext.Current.BindDescriptor( descriptor );
-			IRenderContext.Current.BindVertexBuffer( vertexBuffer );
-			IRenderContext.Current.BindIndexBuffer( indexBuffer );
-			IRenderContext.Current.Draw( vertices.Length, indices.Length, 1 );
+			Render.BindPipeline( pipeline );
+			// Render.BindDescriptor( descriptor );
+			Render.BindVertexBuffer( vertexBuffer );
+			Render.BindIndexBuffer( indexBuffer );
+			Render.Draw( vertices.Length, indices.Length, 1 );
 
-			IRenderContext.Current.EndRendering();
+			Render.EndRendering();
 		};
 
 		window.Run();
-		IRenderContext.Current.Shutdown();
+		Render.Shutdown();
 	}
 }

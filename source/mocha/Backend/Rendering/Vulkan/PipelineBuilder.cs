@@ -85,7 +85,7 @@ internal unsafe class PipelineBuilder
 				GraphicsPipelineCreateInfo pipelineInfo = new()
 				{
 					SType = StructureType.GraphicsPipelineCreateInfo,
-					PNext = null,
+					PNext = &pipelineCreate,
 
 					StageCount = (uint)ShaderStages.Length,
 					PStages = shaderStagesPtr,

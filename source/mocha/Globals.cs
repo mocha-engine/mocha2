@@ -17,8 +17,12 @@ global using System.Threading.Tasks;
 
 global using static Globals;
 
+using Mocha.Rendering;
+
 public static class Globals
 {
 	public static Logger Log { get; } = new();
 	public static IResourceFactory Factory { get; internal set; }
+
+	internal static IRenderContext Render => IRenderContext.Current;
 }

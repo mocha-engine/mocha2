@@ -19,7 +19,7 @@ internal unsafe class VulkanCommandContext : VulkanObject
 		poolInfo.QueueFamilyIndex = Parent.GraphicsQueueFamily;
 		poolInfo.Flags = CommandPoolCreateFlags.ResetCommandBufferBit;
 		
-		Parent.Vk.CreateCommandPool( Parent.Device, poolInfo, null, out CommandPool );
+		VulkanRenderContext.VkCheck( Parent.Vk.CreateCommandPool( Parent.Device, poolInfo, null, out CommandPool ) );
 		
 		var allocInfo = new CommandBufferAllocateInfo(  );
 		allocInfo.SType = StructureType.CommandBufferAllocateInfo;
@@ -28,15 +28,15 @@ internal unsafe class VulkanCommandContext : VulkanObject
 		allocInfo.CommandPool = CommandPool;
 		allocInfo.Level = CommandBufferLevel.Primary;
 		allocInfo.CommandBufferCount = 1;
-		
-		Parent.Vk.AllocateCommandBuffers( Parent.Device, allocInfo, out CommandBuffer );
+
+		VulkanRenderContext.VkCheck( Parent.Vk.AllocateCommandBuffers( Parent.Device, allocInfo, out CommandBuffer ) );
 		
 		var fenceInfo = new FenceCreateInfo(  );
 		fenceInfo.SType = StructureType.FenceCreateInfo;
 		fenceInfo.PNext = null;
 		fenceInfo.Flags = FenceCreateFlags.SignaledBit;
-		
-		Parent.Vk.CreateFence( Parent.Device, fenceInfo, null, out Fence );
+
+		VulkanRenderContext.VkCheck( Parent.Vk.CreateFence( Parent.Device, fenceInfo, null, out Fence ) );
 		
 		SetDebugName( "Command Pool", ObjectType.CommandPool, CommandPool.Handle );
 		SetDebugName( "Command Buffer", ObjectType.CommandBuffer, (ulong)CommandBuffer.Handle );

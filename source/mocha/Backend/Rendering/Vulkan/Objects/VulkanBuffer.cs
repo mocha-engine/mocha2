@@ -64,7 +64,6 @@ internal unsafe class VulkanBuffer : VulkanObject
 
 	public void SetData( BufferUploadInfo bufferUploadInfo )
 	{
-
 		BufferCreateInfo stagingBufferInfo = new();
 		stagingBufferInfo.SType = StructureType.BufferCreateInfo;
 		stagingBufferInfo.PNext = null;

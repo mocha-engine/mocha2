@@ -59,12 +59,5 @@ internal interface IRenderContext
 	// RenderStatus BindConstants( RenderPushConstants p );
 
 	RenderStatus Draw( int vertexCount, int indexCount, int instanceCount );
-
 	RenderStatus BindRenderTarget( RenderTexture rt );
-	RenderStatus GetRenderSize( out Vector2 size );
-	RenderStatus GetGPUInfo( out GPUInfo info );
-
-	RenderStatus GetWindowSize( out Vector2 size );
-	void UpdateWindow();
-	bool GetWindowCloseRequested();
 }

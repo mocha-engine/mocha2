@@ -3,6 +3,7 @@ using Silk.NET.Core.Native;
 using Silk.NET.Vulkan;
 using Silk.NET.Vulkan.Extensions.EXT;
 using Silk.NET.Vulkan.Extensions.KHR;
+using System.Collections.Concurrent;
 using System.Runtime.CompilerServices;
 using System.Runtime.InteropServices;
 using VMASharp;
@@ -66,7 +67,7 @@ internal unsafe partial class VulkanRenderContext : IRenderContext
 			throw new Exception( $"VkCheck got {result}" );
 		}
 	}
-	
+
 	private uint DebugCallback( DebugUtilsMessageSeverityFlagsEXT messageSeverity, DebugUtilsMessageTypeFlagsEXT messageTypes, DebugUtilsMessengerCallbackDataEXT* pCallbackData, void* pUserData )
 	{
 		Action<object> logAction = messageSeverity switch
@@ -146,7 +147,7 @@ internal unsafe partial class VulkanRenderContext : IRenderContext
 		var depthAtachmentInfo = VKInit.RenderingAttachmentInfo( _depthTarget.ImageView, ImageLayout.DepthStencilAttachmentOptimal );
 		depthAtachmentInfo.ClearValue = depthClear;
 
-		var renderInfo = VKInit.RenderingInfo( colorAttachmentInfo, depthAtachmentInfo, new Extent2D() { Width = (uint)_window.FramebufferSize.Value.X, Height = (uint)_window.FramebufferSize.Value.Y } );
+		var renderInfo = VKInit.RenderingInfo( &colorAttachmentInfo, &depthAtachmentInfo, new Extent2D() { Width = (uint)_window.FramebufferSize.Value.X, Height = (uint)_window.FramebufferSize.Value.Y } );
 		Vk.CmdBeginRendering( cmd, renderInfo );
 
 		RenderingActive = true;
@@ -174,8 +175,35 @@ internal unsafe partial class VulkanRenderContext : IRenderContext
 		var endRenderBarrier = VKInit.ImageMemoryBarrier( AccessFlags.ColorAttachmentWriteBit, ImageLayout.Undefined, ImageLayout.PresentSrcKhr, SwapchainTarget.Image );
 		Vk.CmdPipelineBarrier( cmd, PipelineStageFlags.ColorAttachmentOutputBit, PipelineStageFlags.TopOfPipeBit, 0, 0, null, 0, null, [endRenderBarrier] );
 
+		{
+			// Source (_colorTarget)
+			var srcBarrier = VKInit.ImageMemoryBarrier( AccessFlags.ColorAttachmentWriteBit, ImageLayout.Undefined, ImageLayout.TransferSrcOptimal, _colorTarget.Image );
+			Vk.CmdPipelineBarrier( cmd, PipelineStageFlags.ColorAttachmentOutputBit, PipelineStageFlags.TopOfPipeBit, 0, 0, null, 0, null, [srcBarrier] );
+
+			// Destination (SwapchainTarget)
+			var dstBarrier = VKInit.ImageMemoryBarrier( AccessFlags.ColorAttachmentWriteBit, ImageLayout.Undefined, ImageLayout.TransferDstOptimal, SwapchainTarget.Image );
+			Vk.CmdPipelineBarrier( cmd, PipelineStageFlags.ColorAttachmentOutputBit, PipelineStageFlags.TopOfPipeBit, 0, 0, null, 0, null, [dstBarrier] );
+
+			ImageCopy imageCopy = new()
+			{
+				DstOffset = new Offset3D( 0, 0, 0 ),
+				DstSubresource = new ImageSubresourceLayers( ImageAspectFlags.ColorBit, 0, 0, 1 ),
+				Extent = new Extent3D( SwapchainTarget.Size.Width, SwapchainTarget.Size.Height, 1 ),
+				SrcOffset = new Offset3D( 0, 0, 0 ),
+				SrcSubresource = new ImageSubresourceLayers( ImageAspectFlags.ColorBit, 0, 0, 1 )
+			};
+
+			Vk.CmdCopyImage( cmd, _colorTarget.Image, ImageLayout.TransferSrcOptimal, SwapchainTarget.Image, ImageLayout.TransferDstOptimal, 1, [imageCopy] );
+
+			// Transition source back to shader_read_only
+			srcBarrier = VKInit.ImageMemoryBarrier( AccessFlags.ColorAttachmentWriteBit, ImageLayout.TransferSrcOptimal, ImageLayout.ShaderReadOnlyOptimal, _colorTarget.Image );
+			Vk.CmdPipelineBarrier( cmd, PipelineStageFlags.ColorAttachmentOutputBit, PipelineStageFlags.TopOfPipeBit, 0, 0, null, 0, null, [srcBarrier] );
+		}
+
+		Vk.EndCommandBuffer( cmd );
+
 		var waitStage = PipelineStageFlags.ColorAttachmentOutputBit;
-		var submit = VKInit.SubmitInfo( cmd );
+		var submit = VKInit.SubmitInfo( &cmd );
 
 		fixed ( Silk.NET.Vulkan.Semaphore* presentSemaphore = &this.presentSemaphore )
 		{
@@ -188,12 +216,15 @@ internal unsafe partial class VulkanRenderContext : IRenderContext
 				submit.SignalSemaphoreCount = 1;
 				submit.PSignalSemaphores = renderSemaphore;
 
-				Vk.QueueSubmit( _graphicsQueue, [submit], _mainContext.Fence );
+				VkCheck( Vk.QueueSubmit( _graphicsQueue, [submit], _mainContext.Fence ) );
+
+				fixed ( SwapchainKHR* swapchain = &Swapchain.Swapchain )
+				{
+					var presentInfo = VKInit.PresentInfo( swapchain, renderSemaphore, SwapchainImageIndex );
+					SwapchainExtension.QueuePresent( _graphicsQueue, presentInfo );
+				}
 			}
 		}
-
-		var presentInfo = VKInit.PresentInfo( Swapchain.Swapchain, renderSemaphore, SwapchainImageIndex );
-		SwapchainExtension.QueuePresent( _graphicsQueue, presentInfo );
 
 		FrameDeletionQueue.Flush();
 
@@ -336,7 +367,7 @@ internal unsafe partial class VulkanRenderContext : IRenderContext
 		Marshal.FreeHGlobal( (IntPtr)appInfo.PEngineName );
 		SilkMarshal.Free( (nint)createInfo.PpEnabledExtensionNames );
 		SilkMarshal.Free( (nint)createInfo.PpEnabledLayerNames );
-		
+
 		if ( !_vk!.TryGetInstanceExtension( instance, out _surfaceExtension ) )
 		{
 			throw new NotSupportedException( "KHR_surface extension not found." );
@@ -427,7 +458,7 @@ internal unsafe partial class VulkanRenderContext : IRenderContext
 		}
 		else
 		{
-			details.Formats = Array.Empty<SurfaceFormatKHR>();
+			details.Formats = [];
 		}
 
 		uint presentModeCount = 0;
@@ -443,7 +474,7 @@ internal unsafe partial class VulkanRenderContext : IRenderContext
 		}
 		else
 		{
-			details.PresentModes = Array.Empty<PresentModeKHR>();
+			details.PresentModes = [];
 		}
 
 		return details;
@@ -660,7 +691,7 @@ internal unsafe partial class VulkanRenderContext : IRenderContext
 			new DescriptorPoolSize( DescriptorType.InputAttachment, 1000 )
 		];
 
-		fixed( DescriptorPoolSize* poolSizesPtr = poolSizes)
+		fixed ( DescriptorPoolSize* poolSizesPtr = poolSizes )
 		{
 			DescriptorPoolCreateInfo poolInfo = new()
 			{
@@ -716,7 +747,7 @@ internal unsafe partial class VulkanRenderContext : IRenderContext
 			Log.Error( $"Can't start up if {nameof( Startup )} was already called!" );
 			return RenderStatus.AlreadyInitialized;
 		}
-		
+
 		_window = window;
 		_vk = Vk.GetApi();
 
@@ -727,13 +758,17 @@ internal unsafe partial class VulkanRenderContext : IRenderContext
 
 		HasInitialized = true;
 
+		FrameDeletionQueue = new();
+
+		CreateCommands();
 		CreateSamplers();
 		CreateSwapchain();
-		CreateCommands();
 		CreateSyncStructures();
 		CreateDescriptors();
 		// CreateImGui();
 		CreateRenderTargets();
+
+		window.OnRendererInit();
 
 		return RenderStatus.Ok;
 	}
@@ -741,6 +776,20 @@ internal unsafe partial class VulkanRenderContext : IRenderContext
 	private void CreateCommands()
 	{
 		_mainContext = new VulkanCommandContext( this );
+	}
+
+	ConcurrentDictionary<int, VulkanCommandContext> uploadContexts = new();
+	private VulkanCommandContext GetUploadContext( int threadId )
+	{
+		VulkanCommandContext ctx;
+		if ( !uploadContexts.TryGetValue( threadId, out ctx ) )
+		{
+			Log.Trace( $"No upload context for thread {threadId}, spinning up new one" );
+			ctx = new VulkanCommandContext( this );
+			uploadContexts[threadId] = ctx;
+		}
+
+		return ctx;
 	}
 
 	public void ImmediateSubmit( Func<CommandBuffer, RenderStatus> func )
@@ -752,23 +801,23 @@ internal unsafe partial class VulkanRenderContext : IRenderContext
 
 		RenderStatus status;
 
-		VulkanCommandContext context = _mainContext;
+		VulkanCommandContext context = GetUploadContext( Thread.CurrentThread.ManagedThreadId );
 		var cmd = context.CommandBuffer;
 		var cmdBeginInfo = VKInit.CommandBufferBeginInfo( CommandBufferUsageFlags.OneTimeSubmitBit );
 
-		Vk.BeginCommandBuffer( cmd, cmdBeginInfo );
+		VkCheck( Vk.BeginCommandBuffer( cmd, cmdBeginInfo ) );
 
 		status = func.Invoke( cmd );
 
-		Vk.EndCommandBuffer( cmd );
+		VkCheck( Vk.EndCommandBuffer( cmd ) );
 
-		var submitInfo = VKInit.SubmitInfo( cmd );
-		Vk.QueueSubmit( _graphicsQueue, [submitInfo], context.Fence );
+		var submitInfo = VKInit.SubmitInfo( &cmd );
+		VkCheck( Vk.QueueSubmit( _graphicsQueue, [submitInfo], context.Fence ) );
 
-		Vk.WaitForFences( Device, [context.Fence], true, 9999999999 );
-		Vk.ResetFences( Device, [context.Fence] );
+		VkCheck( Vk.WaitForFences( Device, [context.Fence], true, 9999999999 ) );
+		VkCheck( Vk.ResetFences( Device, [context.Fence] ) );
 
-		Vk.ResetCommandPool( Device, context.CommandPool, 0 );
+		VkCheck( Vk.ResetCommandPool( Device, context.CommandPool, 0 ) );
 	}
 
 	public RenderStatus CreateImageTexture( ImageTextureInfo info, out Handle handle )
@@ -882,7 +931,7 @@ internal unsafe partial class VulkanRenderContext : IRenderContext
 
 		Vk.CmdPipelineBarrier( _mainContext.CommandBuffer, PipelineStageFlags.ColorAttachmentOutputBit, PipelineStageFlags.TopOfPipeBit, 0, 0, default, 0, default, 1, startImageMemoryBarrier );
 
-		var colorClear = new ClearValue() { Color = new ClearColorValue(0f, 0f, 0f, 1f) };
+		var colorClear = new ClearValue() { Color = new ClearColorValue( 0f, 0f, 0f, 1f ) };
 		var depthClear = new ClearValue();
 		depthClear.DepthStencil = new ClearDepthStencilValue( 1.0f, 0 );
 
@@ -892,34 +941,9 @@ internal unsafe partial class VulkanRenderContext : IRenderContext
 		var depthAttachmentInfo = VKInit.RenderingAttachmentInfo( _depthTarget.ImageView, ImageLayout.DepthStencilAttachmentOptimal );
 		depthAttachmentInfo.ClearValue = depthClear;
 
-		var renderInfo = VKInit.RenderingInfo( colorAttachmentInfo, depthAttachmentInfo, new Extent2D( renderTexture.Size.Width, renderTexture.Size.Height ) );
+		var renderInfo = VKInit.RenderingInfo( &colorAttachmentInfo, &depthAttachmentInfo, new Extent2D( renderTexture.Size.Width, renderTexture.Size.Height ) );
 		Vk.CmdBeginRendering( _mainContext.CommandBuffer, renderInfo );
 
 		return RenderStatus.Ok;
-	}
-
-	public RenderStatus GetRenderSize( out Vector2 size )
-	{
-		throw new NotImplementedException();
-	}
-
-	public RenderStatus GetGPUInfo( out GPUInfo info )
-	{
-		throw new NotImplementedException();
-	}
-
-	public RenderStatus GetWindowSize( out Vector2 size )
-	{
-		throw new NotImplementedException();
-	}
-
-	public void UpdateWindow()
-	{
-		throw new NotImplementedException();
-	}
-
-	public bool GetWindowCloseRequested()
-	{
-		throw new NotImplementedException();
 	}
 }

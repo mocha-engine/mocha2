@@ -7,5 +7,11 @@ internal struct VulkanVertexInputDescription
 	public List<VertexInputBindingDescription> Bindings;
 	public List<VertexInputAttributeDescription> Attributes;
 
-	uint Flags;
+	public uint Flags;
+
+	public VulkanVertexInputDescription()
+	{
+		Bindings = new();
+		Attributes = new();
+	}
 }

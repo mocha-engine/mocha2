@@ -2,7 +2,7 @@ using Silk.NET.Vulkan;
 
 namespace Mocha.Rendering.Vulkan;
 
-internal class VulkanPipeline : VulkanObject
+internal unsafe class VulkanPipeline : VulkanObject
 {
 	private Format GetVulkanFormat( VertexAttributeFormat format )
 	{
@@ -42,16 +42,114 @@ internal class VulkanPipeline : VulkanObject
 		throw new ArgumentException( "Invalid pipeline format!" );
 	}
 
-	public Pipeline Pipeline;
-	public PipelineLayout Layout;
+	public Silk.NET.Vulkan.Pipeline Pipeline;
+	public Silk.NET.Vulkan.PipelineLayout Layout;
 
 	public VulkanPipeline() { }
 	public VulkanPipeline( VulkanRenderContext parent, PipelineInfo pipelineInfo )
 	{
 		SetParent( parent );
+
+		PipelineBuilder builder = new();
+		var pipelineLayoutInfo = VKInit.PipelineLayoutCreateInfo();
+
+		/* var pushConstant = new PushConstantRange();
+		pushConstant.Offset = 0;
+		pushConstant.Size = sizeof( RenderPushConstants );
+		pushConstant.StageFlags = ShaderStageFlags.VertexBit | ShaderStageFlags.FragmentBit;
+		*/
+
+		var setLayouts = new List<DescriptorSetLayout>();
+
+		foreach ( var descriptor in pipelineInfo.Descriptors )
+		{
+			var vkDescriptor = Parent.Descriptors.Get( descriptor.Handle );
+			setLayouts.Add( vkDescriptor.DescriptorSetLayout );
+		}
+
+		fixed ( DescriptorSetLayout* setLayoutsPtr = setLayouts.ToArray() )
+		{
+			pipelineLayoutInfo.PSetLayouts = setLayoutsPtr;
+			pipelineLayoutInfo.SetLayoutCount = (uint)setLayouts.Count;
+
+			Parent.Vk.CreatePipelineLayout(Parent.Device, pipelineLayoutInfo, null, out builder.PipelineLayout );
+			Layout = builder.PipelineLayout;
+		}
+
+		builder.Rasterizer = VKInit.PipelineRasterizationStateCreateInfo( PolygonMode.Fill );
+		builder.Multisampling = VKInit.PipelineMultisampleStateCreateInfo();
+		builder.ColorBlendAttachment = VKInit.PipelineColorBlendAttachmentState();
+
+		var shader = new VulkanShader( Parent, pipelineInfo.ShaderInfo );
+		var shaderStages = new List<PipelineShaderStageCreateInfo>();
+
+		shaderStages.Add( VKInit.PipelineShaderStageCreateInfo( ShaderStageFlags.VertexBit, shader.VertexShader ) );
+		shaderStages.Add( VKInit.PipelineShaderStageCreateInfo( ShaderStageFlags.FragmentBit, shader.FragmentShader ) );
+
+		builder.ShaderStages = shaderStages.ToArray();
+
+		uint stride = 0;
+		for ( int i = 0; i < pipelineInfo.VertexAttributes.Count; i++ )
+		{
+			stride += GetSizeOf( (VertexAttributeFormat)pipelineInfo.VertexAttributes[i].Format );
+		}
+
+		VulkanVertexInputDescription description = new();
+		VertexInputBindingDescription mainBinding = new()
+		{
+			Binding = 0,
+			Stride = stride,
+			InputRate = VertexInputRate.Vertex
+		};
+
+		description.Bindings.Add( mainBinding );
+
+		uint offset = 0;
+
+		for ( int i = 0; i < pipelineInfo.VertexAttributes.Count; ++i )
+		{
+			var attribute = pipelineInfo.VertexAttributes[i];
+
+			VertexInputAttributeDescription positionAttribute = new();
+			positionAttribute.Binding = 0;
+			positionAttribute.Location = (uint)i;
+			positionAttribute.Format = GetVulkanFormat( (VertexAttributeFormat)attribute.Format );
+			positionAttribute.Offset = offset;
+
+			description.Attributes.Add( positionAttribute );
+
+			offset += GetSizeOf( (VertexAttributeFormat)attribute.Format );
+		}
+
+		fixed ( VertexInputAttributeDescription* attributes = description.Attributes.ToArray() )
+		{
+			fixed ( VertexInputBindingDescription* bindings = description.Bindings.ToArray() )
+			{
+				builder.VertexInputInfo = VKInit.PipelineVertexInputStateCreateInfo();
+				builder.VertexInputInfo.PVertexAttributeDescriptions = attributes;
+				builder.VertexInputInfo.VertexAttributeDescriptionCount = (uint)description.Attributes.Count;
+
+				builder.VertexInputInfo.PVertexBindingDescriptions = bindings;
+				builder.VertexInputInfo.VertexBindingDescriptionCount = (uint)description.Bindings.Count;
+
+				builder.InputAssembly = VKInit.PipelineInputAssemblyStateCreateInfo( PrimitiveTopology.TriangleList );
+				builder.DepthStencil = VKInit.DepthStencilCreateInfo( !pipelineInfo.IgnoreDepth, !pipelineInfo.IgnoreDepth, CompareOp.LessOrEqual );
+			}
+		}
+
+		if ( pipelineInfo.RenderToSwapchain )
+		{
+			Pipeline = builder.Build( Parent, Parent.Device, Format.D32SfloatS8Uint, Parent.ColorTarget.Format );
+		}
+		else
+		{
+			Pipeline = builder.Build( Parent, Parent.Device, Parent.DepthTarget.Format, Parent.ColorTarget.Format );
+		}
 	}
 
 	public override void Delete()
 	{
+		Parent.Vk.DestroyPipeline( Parent.Device, Pipeline, null );
+		Parent.Vk.DestroyPipelineLayout( Parent.Device, Layout, null );
 	}
 }

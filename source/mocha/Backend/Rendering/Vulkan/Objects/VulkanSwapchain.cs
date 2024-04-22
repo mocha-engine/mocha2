@@ -1,9 +1,10 @@
 using Silk.NET.Vulkan;
+using Silk.NET.Vulkan.Extensions.KHR;
 using Semaphore = Silk.NET.Vulkan.Semaphore;
 
 namespace Mocha.Rendering.Vulkan;
 
-internal class VulkanSwapchain : VulkanObject
+internal unsafe class VulkanSwapchain : VulkanObject
 {
 	private SurfaceFormatKHR ChooseSwapSurfaceFormat( IReadOnlyList<SurfaceFormatKHR> availableFormats )
 	{
@@ -31,7 +32,7 @@ internal class VulkanSwapchain : VulkanObject
 		return PresentModeKHR.FifoKhr;
 	}
 
-	private Extent2D ChooseSwapExtent( SurfaceCapabilitiesKHR capabilities )
+	private Extent2D ChooseSwapExtent( Size2D size, SurfaceCapabilitiesKHR capabilities )
 	{
 		if ( capabilities.CurrentExtent.Width != uint.MaxValue )
 		{
@@ -39,12 +40,10 @@ internal class VulkanSwapchain : VulkanObject
 		}
 		else
 		{
-			var framebufferSize = Parent._window!.FramebufferSize!.Value;
-
 			Extent2D actualExtent = new()
 			{
-				Width = (uint)framebufferSize.X,
-				Height = (uint)framebufferSize.Y
+				Width = size.Width,
+				Height = size.Height
 			};
 
 			actualExtent.Width = Math.Clamp( actualExtent.Width, capabilities.MinImageExtent.Width, capabilities.MaxImageExtent.Width );
@@ -53,20 +52,28 @@ internal class VulkanSwapchain : VulkanObject
 		}
 	}
 
+	struct SwapchainDetails
+	{
+		public SurfaceCapabilitiesKHR Capabilities;
+		public SurfaceFormatKHR[] Formats;
+		public PresentModeKHR[] PresentModes;
+	}
+
 	private SwapchainDetails QuerySwapChainSupport( PhysicalDevice physicalDevice )
 	{
 		var details = new SwapchainDetails();
-		_khrSurface!.GetPhysicalDeviceSurfaceCapabilities( physicalDevice, _surface, out details.Capabilities );
+
+		Parent.SurfaceExtension.GetPhysicalDeviceSurfaceCapabilities( physicalDevice, Parent.Surface, out details.Capabilities );
 
 		uint formatCount = 0;
-		_khrSurface.GetPhysicalDeviceSurfaceFormats( physicalDevice, _surface, ref formatCount, null );
+		Parent.SurfaceExtension.GetPhysicalDeviceSurfaceFormats( physicalDevice, Parent.Surface, ref formatCount, null );
 
 		if ( formatCount != 0 )
 		{
 			details.Formats = new SurfaceFormatKHR[formatCount];
 			fixed ( SurfaceFormatKHR* formatsPtr = details.Formats )
 			{
-				_khrSurface.GetPhysicalDeviceSurfaceFormats( physicalDevice, _surface, ref formatCount, formatsPtr );
+				Parent.SurfaceExtension.GetPhysicalDeviceSurfaceFormats( physicalDevice, Parent.Surface, ref formatCount, formatsPtr );
 			}
 		}
 		else
@@ -75,14 +82,14 @@ internal class VulkanSwapchain : VulkanObject
 		}
 
 		uint presentModeCount = 0;
-		_khrSurface.GetPhysicalDeviceSurfacePresentModes( physicalDevice, _surface, ref presentModeCount, null );
+		Parent.SurfaceExtension.GetPhysicalDeviceSurfacePresentModes( physicalDevice, Parent.Surface, ref presentModeCount, null );
 
 		if ( presentModeCount != 0 )
 		{
 			details.PresentModes = new PresentModeKHR[presentModeCount];
 			fixed ( PresentModeKHR* formatsPtr = details.PresentModes )
 			{
-				_khrSurface.GetPhysicalDeviceSurfacePresentModes( physicalDevice, _surface, ref presentModeCount, formatsPtr );
+				Parent.SurfaceExtension.GetPhysicalDeviceSurfacePresentModes( physicalDevice, Parent.Surface, ref presentModeCount, formatsPtr );
 			}
 		}
 		else
@@ -99,7 +106,7 @@ internal class VulkanSwapchain : VulkanObject
 		var surfaceFormat = ChooseSwapSurfaceFormat( swapChainSupport.Formats );
 
 		var presentMode = ChoosePresentMode( swapChainSupport.PresentModes );
-		var extent = ChooseSwapExtent( swapChainSupport.Capabilities );
+		var extent = ChooseSwapExtent( size, swapChainSupport.Capabilities );
 		var imageCount = swapChainSupport.Capabilities.MinImageCount + 1;
 
 		if ( swapChainSupport.Capabilities.MaxImageCount > 0 && imageCount > swapChainSupport.Capabilities.MaxImageCount )
@@ -110,7 +117,7 @@ internal class VulkanSwapchain : VulkanObject
 		SwapchainCreateInfoKHR createInfo = new()
 		{
 			SType = StructureType.SwapchainCreateInfoKhr,
-			Surface = _surface,
+			Surface = Parent.Surface,
 			MinImageCount = imageCount,
 			ImageFormat = surfaceFormat.Format,
 			ImageColorSpace = surfaceFormat.ColorSpace,
@@ -119,9 +126,7 @@ internal class VulkanSwapchain : VulkanObject
 			ImageUsage = ImageUsageFlags.ColorAttachmentBit,
 		};
 
-		var indices = FindQueueFamilies( _physicalDevice );
-		_graphicsQueueFamily = indices.GraphicsFamily!.Value;
-
+		var indices = Parent.Indices;
 		var queueFamilyIndices = stackalloc[] { indices.GraphicsFamily!.Value, indices.PresentFamily!.Value };
 
 		if ( indices.GraphicsFamily != indices.PresentFamily )
@@ -144,35 +149,67 @@ internal class VulkanSwapchain : VulkanObject
 			CompositeAlpha = CompositeAlphaFlagsKHR.OpaqueBitKhr,
 			PresentMode = presentMode,
 			Clipped = true,
-			OldSwapchain = _swapchain
+			OldSwapchain = Swapchain
 		};
 
-		if ( !Parent.Vk.TryGetDeviceExtension( Parent.Instance, Parent.Device, out Parent.KhrSwapchain ) )
+		Parent.SwapchainExtension.CreateSwapchain( Parent.Device, createInfo, null, out Swapchain );
+		Parent.SwapchainExtension.GetSwapchainImages( Parent.Device, Swapchain, ref imageCount, null );
+
+		var images = new Image[imageCount];
+
+		fixed ( Image* swapChainImagesPtr = images )
 		{
-			throw new NotSupportedException( "VK_KHR_swapchain extension not found." );
+			Parent.SwapchainExtension.GetSwapchainImages( Parent.Device, Swapchain, ref imageCount, swapChainImagesPtr );
 		}
 
-		Parent.KhrSwapchain.CreateSwapchain( Parent.Device, createInfo, null, out Swapchain );
-
-		Parent.KhrSwapchain.GetSwapchainImages( Parent.Device, Swapchain, ref imageCount, null );
-		_swapchainImages = new Image[imageCount];
-
-		fixed ( Image* swapChainImagesPtr = _swapchainImages )
+		foreach ( var image in images )
 		{
-			_khrSwapchain.GetSwapchainImages( _device, _swapchain, ref imageCount, swapChainImagesPtr );
+			var rt = new VulkanRenderTexture( Parent )
+			{
+				Image = image,
+				Format = surfaceFormat.Format
+			};
+
+			Parent.Vk.CreateImageView( Parent.Device, new ImageViewCreateInfo
+			{
+				SType = StructureType.ImageViewCreateInfo,
+				Image = image,
+				ViewType = ImageViewType.Type2D,
+				Format = surfaceFormat.Format,
+				Components = new ComponentMapping
+				{
+					R = ComponentSwizzle.R,
+					G = ComponentSwizzle.G,
+					B = ComponentSwizzle.B,
+					A = ComponentSwizzle.A
+				},
+				SubresourceRange = new ImageSubresourceRange
+				{
+					AspectMask = ImageAspectFlags.ColorBit,
+					BaseMipLevel = 0,
+					LevelCount = 1,
+					BaseArrayLayer = 0,
+					LayerCount = 1
+				}
+			}, null, out rt.ImageView );
+
+			SwapchainTextures.Add( rt );
 		}
 
-		_swapchainImageFormat = surfaceFormat.Format;
-		_swapchainExtent = extent;
+		Extent = extent;
 	}
 
-	public SwapchainKHR Swapchain = 0;
-	public List<VulkanRenderTexture> SwapchainTextures;
+	public Extent2D Extent;
+	public SwapchainKHR Swapchain;
+	public List<VulkanRenderTexture> SwapchainTextures = new();
 
 	public uint AcquireSwapchainImageIndex( Device device, Semaphore presentSemaphore, VulkanCommandContext mainContext )
 	{
 		uint swapchainImageIndex = 0;
-		// VK_CHECK and implementation needed
+
+		Parent.SwapchainExtension.AcquireNextImage( Parent.Device, Swapchain, 1000000000, presentSemaphore, default, ref swapchainImageIndex );
+		Parent.Vk.ResetCommandBuffer( mainContext.CommandBuffer, CommandBufferResetFlags.None );
+
 		return swapchainImageIndex;
 	}
 

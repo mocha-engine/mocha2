@@ -6,4 +6,10 @@ public class HandleMap<T> : List<T>
 	{
 		return this[(int)handle.Value];
 	}
+
+	public new Handle Add( T value )
+	{
+		base.Add( value );
+		return new Handle( (uint)( Count - 1 ) );
+	}
 }

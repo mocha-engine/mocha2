@@ -1,6 +1,4 @@
-﻿using Mocha.Formats;
-
-namespace Mocha.SceneSystem;
+﻿namespace Mocha.SceneSystem;
 
 public sealed record class SceneModel : SceneObject
 {

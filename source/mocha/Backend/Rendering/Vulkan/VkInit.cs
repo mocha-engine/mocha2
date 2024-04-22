@@ -85,7 +85,20 @@ internal static unsafe class VKInit
 		};
 	}
 
+	public static RenderingAttachmentInfo RenderingAttachmentInfo( ImageView imageView, ImageLayout imageLayout )
+	{
+		RenderingAttachmentInfo renderingAttachmentInfo = new();
+		renderingAttachmentInfo.SType = StructureType.RenderingAttachmentInfo;
+		renderingAttachmentInfo.PNext = null;
 
+		renderingAttachmentInfo.ImageLayout = imageLayout;
+		renderingAttachmentInfo.ResolveMode = ResolveModeFlags.None;
+		renderingAttachmentInfo.LoadOp = AttachmentLoadOp.Clear;
+		renderingAttachmentInfo.StoreOp = AttachmentStoreOp.Store;
+		renderingAttachmentInfo.ImageView = imageView;
+
+		return renderingAttachmentInfo;
+	}
 
 	public static RenderingInfo RenderingInfo( RenderingAttachmentInfo colorAttachmentInfo, RenderingAttachmentInfo depthAttachmentInfo, Extent2D extent )
 	{

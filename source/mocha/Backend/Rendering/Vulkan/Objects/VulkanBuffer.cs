@@ -27,7 +27,7 @@ internal unsafe class VulkanBuffer : VulkanObject
 			outFlags |= Silk.NET.Vulkan.BufferUsageFlags.TransferDstBit;
 
 		if ( bufferInfo.Type == BufferType.VertexIndexData )
-			Debug.Assert( outFlags.HasFlag( BufferUsageFlags.IndexBuffer ) || outFlags.HasFlag( BufferUsageFlags.VertexBuffer ), "Invalid flags" );
+			Debug.Assert( outFlags.HasFlag( Silk.NET.Vulkan.BufferUsageFlags.IndexBufferBit ) || outFlags.HasFlag( Silk.NET.Vulkan.BufferUsageFlags.VertexBufferBit ), "Invalid flags" );
 
 		Debug.Assert( outFlags != Silk.NET.Vulkan.BufferUsageFlags.None, "Invalid flags" );
 

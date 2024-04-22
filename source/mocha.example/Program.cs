@@ -20,7 +20,7 @@ using ( var app = new MochaApplication( "Mocha Example" ) )
 		//
 		// Scene setup
 		//
-		var texture = new Texture( "/test.texture" );
+		// var texture = new Texture( "/test.texture" );
 
 		//var suzanne = new SceneModel( Scene.Main, "suzanne.model" ) with
 		//{

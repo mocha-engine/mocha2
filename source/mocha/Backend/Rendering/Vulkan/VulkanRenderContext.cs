@@ -1,6 +1,7 @@
 ﻿using Silk.NET.Core;
 using Silk.NET.Core.Native;
 using Silk.NET.Vulkan;
+using Silk.NET.Vulkan.Extensions.EXT;
 using Silk.NET.Vulkan.Extensions.KHR;
 using System.Runtime.CompilerServices;
 using System.Runtime.InteropServices;
@@ -13,29 +14,28 @@ internal unsafe partial class VulkanRenderContext : IRenderContext
 	public bool HasInitialized { get; private set; }
 	public bool RenderingActive { get; private set; }
 
+	private bool IsRenderPassActive;
+
 	private Window _window = null!;
 
-	[WithProperty]
-	private Vk _vk = null!;
+	[WithProperty] private Vk _vk = null!;
+	[WithProperty] private PhysicalDevice _chosenGPU;
+	[WithProperty] private Device _device;
+	[WithProperty] private SurfaceKHR _surface;
+	[WithProperty] private Instance _instance;
+	[WithProperty] private QueueFamilyIndices _indices;
 
-	[WithProperty]
-	private SurfaceKHR _surface;
+	[WithProperty] private KhrSurface _surfaceExtension = null!;
+	[WithProperty] private KhrSwapchain _swapchainExtension = null!;
 
-	private KhrSurface _surfaceExtension = null!;
-
-	[WithProperty]
-	private PhysicalDevice _chosenGPU;
-
-	[WithProperty]
-	private Device _device;
+	[WithProperty] private VulkanMemoryAllocator _allocator = null!;
 
 	private Queue _graphicsQueue;
 	private Queue _presentQueue;
 
-	private Instance _instance;
-
-	[WithProperty]
-	private VulkanMemoryAllocator _allocator;
+	[WithProperty] private VulkanCommandContext _mainContext = null!;
+	[WithProperty] private VulkanRenderTexture _depthTarget = null!;
+	[WithProperty] private VulkanRenderTexture _colorTarget = null!;
 
 #if DEBUG
 	string[] _requiredValidationLayers = ["VK_LAYER_KHRONOS_validation"];
@@ -44,15 +44,19 @@ internal unsafe partial class VulkanRenderContext : IRenderContext
 #endif
 
 	string[] _deviceExtensions = [KhrSwapchain.ExtensionName];
+	string[] _instanceExtensions = [KhrSurface.ExtensionName, ExtDebugUtils.ExtensionName, KhrWin32Surface.ExtensionName];
 
 	public HandleMap<VulkanBuffer> Buffers = new();
 	public HandleMap<VulkanImageTexture> ImageTextures = new();
 	public HandleMap<VulkanRenderTexture> RenderTextures = new();
 	public HandleMap<VulkanDescriptor> Descriptors = new();
 	public HandleMap<VulkanShader> Shaders = new();
+	public HandleMap<VulkanPipeline> Pipelines = new();
 
 	public DescriptorPool DescriptorPool;
 	public uint GraphicsQueueFamily;
+
+	private VulkanPipeline Pipeline;
 
 	public static void VkCheck( Result result )
 	{
@@ -89,6 +93,9 @@ internal unsafe partial class VulkanRenderContext : IRenderContext
 		createInfo.PfnUserCallback = (PfnDebugUtilsMessengerCallbackEXT)DebugCallback;
 	}
 
+	uint SwapchainImageIndex;
+	VulkanRenderTexture SwapchainTarget;
+
 	public RenderStatus BeginRendering()
 	{
 		if ( RenderingActive )
@@ -97,7 +104,53 @@ internal unsafe partial class VulkanRenderContext : IRenderContext
 			return RenderStatus.BeginEndMismatch;
 		}
 
+		// _window.Show();
+
+		Vk.WaitForFences( Device, [_mainContext.Fence], true, 1000000000 );
+		Vk.ResetFences( Device, [_mainContext.Fence] );
+
+		SwapchainImageIndex = Swapchain.AcquireSwapchainImageIndex( Device, presentSemaphore, _mainContext );
+		SwapchainTarget = Swapchain.SwapchainTextures[(int)SwapchainImageIndex];
+
+		var cmd = _mainContext.CommandBuffer;
+		var beginInfo = VKInit.CommandBufferBeginInfo( CommandBufferUsageFlags.OneTimeSubmitBit );
+
+		Vk.BeginCommandBuffer( cmd, beginInfo );
+
+		Viewport viewport = new()
+		{
+			MinDepth = 0,
+			MaxDepth = 1,
+			Width = Swapchain.Extent.Width,
+			Height = Swapchain.Extent.Height
+		};
+
+		Rect2D scissor = new()
+		{
+			Extent = Swapchain.Extent,
+			Offset = new( 0, 0 )
+		};
+
+		Vk.CmdSetScissor( cmd, 0, [scissor] );
+		Vk.CmdSetViewport( cmd, 0, [viewport] );
+
+		var writeToColorTargetBarrier = VKInit.ImageMemoryBarrier( AccessFlags.ShaderReadBit, ImageLayout.ShaderReadOnlyOptimal, ImageLayout.ColorAttachmentOptimal, _colorTarget.Image );
+		Vk.CmdPipelineBarrier( cmd, PipelineStageFlags.FragmentShaderBit, PipelineStageFlags.ColorAttachmentOutputBit, 0, 0, null, 0, null, [writeToColorTargetBarrier] );
+
+		var colorClear = new ClearValue { Color = new ClearColorValue( 0.0f, 0.0f, 0.0f, 1.0f ) };
+		var depthClear = new ClearValue { DepthStencil = new ClearDepthStencilValue( 1.0f, 0 ) };
+
+		var colorAttachmentInfo = VKInit.RenderingAttachmentInfo( _colorTarget.ImageView, ImageLayout.ColorAttachmentOptimal );
+		colorAttachmentInfo.ClearValue = colorClear;
+
+		var depthAtachmentInfo = VKInit.RenderingAttachmentInfo( _depthTarget.ImageView, ImageLayout.DepthStencilAttachmentOptimal );
+		depthAtachmentInfo.ClearValue = depthClear;
+
+		var renderInfo = VKInit.RenderingInfo( colorAttachmentInfo, depthAtachmentInfo, new Extent2D() { Width = (uint)_window.FramebufferSize.Value.X, Height = (uint)_window.FramebufferSize.Value.Y } );
+		Vk.CmdBeginRendering( cmd, renderInfo );
+
 		RenderingActive = true;
+		IsRenderPassActive = true;
 
 		return RenderStatus.Ok;
 	}
@@ -110,124 +163,127 @@ internal unsafe partial class VulkanRenderContext : IRenderContext
 			return RenderStatus.BeginEndMismatch;
 		}
 
+		var cmd = _mainContext.CommandBuffer;
+
+		if ( IsRenderPassActive )
+		{
+			Vk.CmdEndRendering( cmd );
+			IsRenderPassActive = false;
+		}
+
+		var endRenderBarrier = VKInit.ImageMemoryBarrier( AccessFlags.ColorAttachmentWriteBit, ImageLayout.Undefined, ImageLayout.PresentSrcKhr, SwapchainTarget.Image );
+		Vk.CmdPipelineBarrier( cmd, PipelineStageFlags.ColorAttachmentOutputBit, PipelineStageFlags.TopOfPipeBit, 0, 0, null, 0, null, [endRenderBarrier] );
+
+		var waitStage = PipelineStageFlags.ColorAttachmentOutputBit;
+		var submit = VKInit.SubmitInfo( cmd );
+
+		fixed ( Silk.NET.Vulkan.Semaphore* presentSemaphore = &this.presentSemaphore )
+		{
+			fixed ( Silk.NET.Vulkan.Semaphore* renderSemaphore = &this.renderSemaphore )
+			{
+				submit.PWaitDstStageMask = &waitStage;
+				submit.WaitSemaphoreCount = 1;
+				submit.PWaitSemaphores = presentSemaphore;
+
+				submit.SignalSemaphoreCount = 1;
+				submit.PSignalSemaphores = renderSemaphore;
+
+				Vk.QueueSubmit( _graphicsQueue, [submit], _mainContext.Fence );
+			}
+		}
+
+		var presentInfo = VKInit.PresentInfo( Swapchain.Swapchain, renderSemaphore, SwapchainImageIndex );
+		SwapchainExtension.QueuePresent( _graphicsQueue, presentInfo );
+
+		FrameDeletionQueue.Flush();
+
 		RenderingActive = false;
+		return RenderStatus.Ok;
+	}
+	public RenderStatus CreateRenderTexture( RenderTextureInfo info, out Handle handle )
+	{
+		handle = Handle.Invalid;
+
+		if ( !HasInitialized )
+			return RenderStatus.NotInitialized;
+
+		var renderTexture = new VulkanRenderTexture( this, info );
+		RenderTextures.Add( renderTexture );
+		handle = new Handle( (uint)RenderTextures.Count - 1 );
 
 		return RenderStatus.Ok;
 	}
 
-	public RenderStatus CreateImageTexture( ImageTextureInfo info, out Handle handle )
-	{
-		throw new NotImplementedException();
-	}
-
-	public RenderStatus CreateRenderTexture( RenderTextureInfo info, out Handle handle )
-	{
-		throw new NotImplementedException();
-	}
-
 	public RenderStatus SetImageTextureData( Handle handle, TextureData textureData )
 	{
-		throw new NotImplementedException();
+		if ( !HasInitialized )
+			return RenderStatus.NotInitialized;
+
+		var imageTexture = ImageTextures[(int)handle.Value];
+		imageTexture.SetData( textureData );
+		return RenderStatus.Ok;
 	}
 
 	public RenderStatus CopyImageTexture( Handle handle, TextureCopyData textureCopyData )
 	{
-		throw new NotImplementedException();
+		if ( !HasInitialized )
+			return RenderStatus.NotInitialized;
+
+		var imageTexture = ImageTextures[(int)handle.Value];
+		imageTexture.Copy( textureCopyData );
+		return RenderStatus.Ok;
 	}
 
 	public RenderStatus CreateBuffer( BufferInfo info, out Handle handle )
 	{
-		throw new NotImplementedException();
+		handle = Handle.Invalid;
+
+		if ( !HasInitialized )
+			return RenderStatus.NotInitialized;
+
+		var buffer = new VulkanBuffer( this, info, MemoryUsage.Unknown );
+		Buffers.Add( buffer );
+		handle = new Handle( (uint)Buffers.Count - 1 );
+
+		return RenderStatus.Ok;
 	}
 
 	public RenderStatus CreateVertexBuffer( BufferInfo info, out Handle handle )
 	{
-		throw new NotImplementedException();
+		handle = Handle.Invalid;
+
+		if ( !HasInitialized )
+			return RenderStatus.NotInitialized;
+
+		var vertexBuffer = new VulkanBuffer( this, info, MemoryUsage.Unknown );
+		Buffers.Add( vertexBuffer );
+		handle = new Handle( (uint)Buffers.Count - 1 );
+
+		return RenderStatus.Ok;
 	}
 
 	public RenderStatus CreateIndexBuffer( BufferInfo info, out Handle handle )
 	{
-		throw new NotImplementedException();
+		handle = Handle.Invalid;
+
+		if ( !HasInitialized )
+			return RenderStatus.NotInitialized;
+
+		var indexBuffer = new VulkanBuffer( this, info, MemoryUsage.Unknown );
+		Buffers.Add( indexBuffer );
+		handle = new Handle( (uint)Buffers.Count - 1 );
+
+		return RenderStatus.Ok;
 	}
 
 	public RenderStatus UploadBuffer( Handle handle, BufferUploadInfo uploadInfo )
 	{
-		throw new NotImplementedException();
-	}
+		if ( !HasInitialized )
+			return RenderStatus.NotInitialized;
 
-	public RenderStatus CreatePipeline( PipelineInfo info, out Handle handle )
-	{
-		throw new NotImplementedException();
-	}
-
-	public RenderStatus CreateDescriptor( DescriptorInfo info, out Handle handle )
-	{
-		throw new NotImplementedException();
-	}
-
-	public RenderStatus CreateShader( ShaderInfo info, out Handle handle )
-	{
-		throw new NotImplementedException();
-	}
-
-	public RenderStatus BindPipeline( Pipeline p )
-	{
-		throw new NotImplementedException();
-	}
-
-	public RenderStatus BindDescriptor( Descriptor d )
-	{
-		throw new NotImplementedException();
-	}
-
-	public RenderStatus UpdateDescriptor( Descriptor d, DescriptorUpdateInfo updateInfo )
-	{
-		throw new NotImplementedException();
-	}
-
-	public RenderStatus BindVertexBuffer( VertexBuffer vb )
-	{
-		throw new NotImplementedException();
-	}
-
-	public RenderStatus BindIndexBuffer( IndexBuffer ib )
-	{
-		throw new NotImplementedException();
-	}
-
-	public RenderStatus Draw( int vertexCount, int indexCount, int instanceCount )
-	{
-		throw new NotImplementedException();
-	}
-
-	public RenderStatus BindRenderTarget( RenderTexture rt )
-	{
-		throw new NotImplementedException();
-	}
-
-	public RenderStatus GetRenderSize( out Vector2 size )
-	{
-		throw new NotImplementedException();
-	}
-
-	public RenderStatus GetGPUInfo( out GPUInfo info )
-	{
-		throw new NotImplementedException();
-	}
-
-	public RenderStatus GetWindowSize( out Vector2 size )
-	{
-		throw new NotImplementedException();
-	}
-
-	public void UpdateWindow()
-	{
-		throw new NotImplementedException();
-	}
-
-	public bool GetWindowCloseRequested()
-	{
-		throw new NotImplementedException();
+		var buffer = Buffers[(int)handle.Value];
+		buffer.SetData( uploadInfo );
+		return RenderStatus.Ok;
 	}
 
 	public RenderStatus Shutdown()
@@ -261,10 +317,12 @@ internal unsafe partial class VulkanRenderContext : IRenderContext
 			PApplicationInfo = &appInfo
 		};
 
-		var extensions = _window!.VkSurface!.GetRequiredExtensions( out var extensionCount );
+		var pExtensions = _window!.VkSurface!.GetRequiredExtensions( out var extensionCount );
+		//var extensions = SilkMarshal.PtrToStringArray( pExtensions, extensionCount );
+		//extensions = extensions.Concat( _deviceExtensions ).ToArray();
 
-		createInfo.EnabledExtensionCount = extensionCount;
-		createInfo.PpEnabledExtensionNames = extensions;
+		createInfo.EnabledExtensionCount = (uint)_instanceExtensions.Length;
+		createInfo.PpEnabledExtensionNames = (byte**)SilkMarshal.StringArrayToPtr( _instanceExtensions );
 		createInfo.EnabledLayerCount = (uint)_requiredValidationLayers.Length;
 		createInfo.PpEnabledLayerNames = (byte**)SilkMarshal.StringArrayToMemory( _requiredValidationLayers );
 
@@ -344,6 +402,13 @@ internal unsafe partial class VulkanRenderContext : IRenderContext
 		return _deviceExtensions.All( availableExtensionNames.Contains );
 	}
 
+	struct SwapchainDetails
+	{
+		public SurfaceCapabilitiesKHR Capabilities;
+		public SurfaceFormatKHR[] Formats;
+		public PresentModeKHR[] PresentModes;
+	}
+
 	private SwapchainDetails QuerySwapChainSupport( PhysicalDevice physicalDevice )
 	{
 		var details = new SwapchainDetails();
@@ -384,9 +449,8 @@ internal unsafe partial class VulkanRenderContext : IRenderContext
 		return details;
 	}
 
-	private bool IsDeviceSuitable( PhysicalDevice device )
+	private bool IsDeviceSuitable( QueueFamilyIndices indices, PhysicalDevice device )
 	{
-		var indices = FindQueueFamilies( device );
 		bool extensionsSupported = CheckDeviceExtensionsSupport( device );
 		bool swapChainAdequate = false;
 
@@ -420,8 +484,11 @@ internal unsafe partial class VulkanRenderContext : IRenderContext
 
 		foreach ( var device in devices )
 		{
-			if ( IsDeviceSuitable( device ) )
+			var indices = FindQueueFamilies( device );
+
+			if ( IsDeviceSuitable( indices, device ) )
 			{
+				_indices = indices;
 				physicalDevice = device;
 				break;
 			}
@@ -431,6 +498,8 @@ internal unsafe partial class VulkanRenderContext : IRenderContext
 		{
 			throw new Exception( "Failed to find a suitable GPU?" );
 		}
+
+		_chosenGPU = physicalDevice.Value;
 
 		return physicalDevice;
 	}
@@ -458,13 +527,47 @@ internal unsafe partial class VulkanRenderContext : IRenderContext
 			};
 		}
 
-		PhysicalDeviceFeatures deviceFeatures = new();
+
+		PhysicalDeviceVulkan13Features requiredFeatures13 = new()
+		{
+			SType = StructureType.PhysicalDeviceVulkan13Features,
+			PNext = null,
+			DynamicRendering = true
+		};
+
+		PhysicalDeviceVulkan12Features requiredFeatures12 = new()
+		{
+			SType = StructureType.PhysicalDeviceVulkan12Features,
+			PNext = &requiredFeatures13,
+			DescriptorIndexing = true,
+			BufferDeviceAddress = true
+		};
+
+		PhysicalDeviceVulkan11Features requiredFeatures11 = new()
+		{
+			SType = StructureType.PhysicalDeviceVulkan11Features,
+			PNext = &requiredFeatures12
+		};
+
+		PhysicalDeviceFeatures requiredFeatures = new()
+		{
+			SamplerAnisotropy = true,
+		};
+
+		PhysicalDeviceFeatures2 requiredFeatures2 = new()
+		{
+			SType = StructureType.PhysicalDeviceFeatures2,
+			PNext = &requiredFeatures11,
+			Features = requiredFeatures,
+		};
+
 		DeviceCreateInfo createInfo = new()
 		{
 			SType = StructureType.DeviceCreateInfo,
+			PNext = &requiredFeatures2,
 			QueueCreateInfoCount = (uint)uniqueQueueFamilies.Length,
 			PQueueCreateInfos = queueCreateInfos,
-			PEnabledFeatures = &deviceFeatures,
+			PEnabledFeatures = null,
 
 			EnabledExtensionCount = (uint)_deviceExtensions.Length,
 			PpEnabledExtensionNames = (byte**)SilkMarshal.StringArrayToPtr( _deviceExtensions )
@@ -478,6 +581,13 @@ internal unsafe partial class VulkanRenderContext : IRenderContext
 		_vk!.GetDeviceQueue( _device, indices.GraphicsFamily!.Value, 0, out _graphicsQueue );
 		_vk!.GetDeviceQueue( _device, indices.PresentFamily!.Value, 0, out _presentQueue );
 
+		GraphicsQueueFamily = indices.GraphicsFamily!.Value;
+
+		if ( !_vk!.TryGetDeviceExtension( Instance, Device, out _swapchainExtension ) )
+		{
+			throw new NotSupportedException( "KHR_swapchain extension not found." );
+		}
+
 		SilkMarshal.Free( (nint)createInfo.PpEnabledLayerNames );
 	}
 
@@ -487,10 +597,116 @@ internal unsafe partial class VulkanRenderContext : IRenderContext
 		{
 			LogicalDevice = _device,
 			Instance = _instance,
-			VulkanAPIObject = _vk
+			PhysicalDevice = _chosenGPU,
+			VulkanAPIObject = _vk,
+			VulkanAPIVersion = Vk.Version13
 		};
 
 		_allocator = new VulkanMemoryAllocator( allocatorCreateInfo );
+	}
+
+	VulkanSampler PointSampler;
+	VulkanSampler AnisoSampler;
+
+	private void CreateSamplers()
+	{
+		PointSampler = new VulkanSampler( this, SamplerType.Point );
+		AnisoSampler = new VulkanSampler( this, SamplerType.Anisotropic );
+	}
+
+	VulkanSwapchain Swapchain;
+
+	private void CreateSwapchain()
+	{
+		var size = new Size2D( (uint)_window.FramebufferSize.Value.X, (uint)_window.FramebufferSize.Value.Y );
+
+		Swapchain = new VulkanSwapchain( this, size );
+
+		_window.OnResize += () =>
+		{
+			var size = new Size2D( (uint)_window.FramebufferSize.Value.X, (uint)_window.FramebufferSize.Value.Y );
+			Swapchain.Update( size );
+			CreateRenderTargets();
+		};
+	}
+
+	Silk.NET.Vulkan.Semaphore presentSemaphore;
+	Silk.NET.Vulkan.Semaphore renderSemaphore;
+
+	private void CreateSyncStructures()
+	{
+		var semaphoreCreateInfo = new SemaphoreCreateInfo()
+		{
+			SType = StructureType.SemaphoreCreateInfo,
+			PNext = null,
+			Flags = 0
+		};
+
+		Vk.CreateSemaphore( Device, semaphoreCreateInfo, null, out presentSemaphore );
+		Vk.CreateSemaphore( Device, semaphoreCreateInfo, null, out renderSemaphore );
+	}
+
+	private void CreateDescriptors()
+	{
+		DescriptorPoolSize[] poolSizes = [
+			new DescriptorPoolSize( DescriptorType.UniformBuffer, 1000 ),
+			new DescriptorPoolSize( DescriptorType.CombinedImageSampler, 1000 ),
+			new DescriptorPoolSize( DescriptorType.StorageBuffer, 1000 ),
+			new DescriptorPoolSize( DescriptorType.StorageImage, 1000 ),
+			new DescriptorPoolSize( DescriptorType.UniformTexelBuffer, 1000 ),
+			new DescriptorPoolSize( DescriptorType.StorageTexelBuffer, 1000 ),
+			new DescriptorPoolSize( DescriptorType.UniformBufferDynamic, 1000 ),
+			new DescriptorPoolSize( DescriptorType.StorageBufferDynamic, 1000 ),
+			new DescriptorPoolSize( DescriptorType.InputAttachment, 1000 )
+		];
+
+		fixed( DescriptorPoolSize* poolSizesPtr = poolSizes)
+		{
+			DescriptorPoolCreateInfo poolInfo = new()
+			{
+				SType = StructureType.DescriptorPoolCreateInfo,
+				PNext = null,
+				Flags = DescriptorPoolCreateFlags.FreeDescriptorSetBit,
+				MaxSets = 1000,
+				PoolSizeCount = (uint)poolSizes.Length,
+				PPoolSizes = poolSizesPtr
+			};
+
+			Vk.CreateDescriptorPool( Device, poolInfo, null, out DescriptorPool );
+		}
+	}
+
+	VulkanDeletionQueue FrameDeletionQueue;
+
+	private void CreateRenderTargets()
+	{
+		// Are we re-creating render targets? If so, queue the originals for deletion
+		if ( _colorTarget != null && _colorTarget.Image.Handle != 0 )
+		{
+			var colorTargetCopy = _colorTarget;
+			var depthTargetCopy = _depthTarget;
+
+			FrameDeletionQueue.Enqueue( () =>
+			{
+				colorTargetCopy.Delete();
+				depthTargetCopy.Delete();
+			} );
+		}
+
+		var size = new Size2D( (uint)_window.FramebufferSize.Value.X, (uint)_window.FramebufferSize.Value.Y );
+
+		RenderTextureInfo renderTextureInfo = new()
+		{
+			Name = "Main render target",
+			Width = size.Width,
+			Height = size.Height
+		};
+
+		renderTextureInfo.Type = RenderTextureType.Depth;
+		_depthTarget = new VulkanRenderTexture( this, renderTextureInfo );
+
+		renderTextureInfo.Type = RenderTextureType.Color;
+		_colorTarget = new VulkanRenderTexture( this, renderTextureInfo );
 	}
 
 	public RenderStatus Startup( Window window )
@@ -511,11 +727,199 @@ internal unsafe partial class VulkanRenderContext : IRenderContext
 
 		HasInitialized = true;
 
+		CreateSamplers();
+		CreateSwapchain();
+		CreateCommands();
+		CreateSyncStructures();
+		CreateDescriptors();
+		// CreateImGui();
+		CreateRenderTargets();
+
 		return RenderStatus.Ok;
+	}
+
+	private void CreateCommands()
+	{
+		_mainContext = new VulkanCommandContext( this );
 	}
 
 	public void ImmediateSubmit( Func<CommandBuffer, RenderStatus> func )
 	{
-		// todo
+		if ( !HasInitialized )
+		{
+			throw new Exception();
+		}
+
+		RenderStatus status;
+
+		VulkanCommandContext context = _mainContext;
+		var cmd = context.CommandBuffer;
+		var cmdBeginInfo = VKInit.CommandBufferBeginInfo( CommandBufferUsageFlags.OneTimeSubmitBit );
+
+		Vk.BeginCommandBuffer( cmd, cmdBeginInfo );
+
+		status = func.Invoke( cmd );
+
+		Vk.EndCommandBuffer( cmd );
+
+		var submitInfo = VKInit.SubmitInfo( cmd );
+		Vk.QueueSubmit( _graphicsQueue, [submitInfo], context.Fence );
+
+		Vk.WaitForFences( Device, [context.Fence], true, 9999999999 );
+		Vk.ResetFences( Device, [context.Fence] );
+
+		Vk.ResetCommandPool( Device, context.CommandPool, 0 );
+	}
+
+	public RenderStatus CreateImageTexture( ImageTextureInfo info, out Handle handle )
+	{
+		handle = Handle.Invalid;
+
+		if ( !HasInitialized )
+			return RenderStatus.NotInitialized;
+
+		var imageTexture = new VulkanImageTexture( this, info );
+		handle = ImageTextures.Add( imageTexture );
+
+		return RenderStatus.Ok;
+	}
+
+	public RenderStatus CreatePipeline( PipelineInfo info, out Handle handle )
+	{
+		var pipeline = new VulkanPipeline( this, info );
+		handle = Pipelines.Add( pipeline );
+
+		return RenderStatus.Ok;
+	}
+
+	public RenderStatus CreateDescriptor( DescriptorInfo info, out Handle handle )
+	{
+		var descriptor = new VulkanDescriptor( this, info );
+		handle = Descriptors.Add( descriptor );
+
+		return RenderStatus.Ok;
+	}
+
+	public RenderStatus CreateShader( ShaderInfo info, out Handle handle )
+	{
+		var shader = new VulkanShader( this, info );
+		handle = Shaders.Add( shader );
+
+		return RenderStatus.Ok;
+	}
+
+	public RenderStatus BindPipeline( Pipeline p )
+	{
+		var pipeline = Pipelines.Get( p.Handle );
+		Pipeline = pipeline;
+
+		Vk.CmdBindPipeline( _mainContext.CommandBuffer, PipelineBindPoint.Graphics, Pipeline.Pipeline );
+		return RenderStatus.Ok;
+	}
+
+	public RenderStatus BindDescriptor( Descriptor d )
+	{
+		var descriptor = Descriptors.Get( d.Handle );
+		Vk.CmdBindDescriptorSets( _mainContext.CommandBuffer, PipelineBindPoint.Graphics, Pipeline.Layout, 0, 0, descriptor.DescriptorSet, 0, null );
+
+		return RenderStatus.Ok;
+	}
+
+	public RenderStatus UpdateDescriptor( Descriptor d, DescriptorUpdateInfo updateInfo )
+	{
+		BindDescriptor( d );
+
+		var descriptor = Descriptors.Get( d.Handle );
+		var texture = ImageTextures.Get( updateInfo.Source.Handle );
+
+		DescriptorImageInfo imageInfo = new()
+		{
+			ImageLayout = ImageLayout.ShaderReadOnlyOptimal,
+			ImageView = texture.ImageView,
+			Sampler = updateInfo.SamplerType == SamplerType.Anisotropic ? AnisoSampler.Sampler : PointSampler.Sampler
+		};
+
+		var descriptorWrite = VKInit.WriteDescriptorImage( DescriptorType.CombinedImageSampler, descriptor.DescriptorSet, [imageInfo], (uint)updateInfo.Binding );
+
+		Vk.UpdateDescriptorSets( Device, [descriptorWrite], [] );
+
+		return RenderStatus.Ok;
+	}
+
+	public RenderStatus BindVertexBuffer( VertexBuffer vb )
+	{
+		var buffer = Buffers.Get( vb.Handle );
+		Vk.CmdBindVertexBuffers( _mainContext.CommandBuffer, 0, [buffer.buffer], [0] );
+
+		return RenderStatus.Ok;
+	}
+
+	public RenderStatus BindIndexBuffer( IndexBuffer ib )
+	{
+		var buffer = Buffers.Get( ib.Handle );
+		Vk.CmdBindIndexBuffer( _mainContext.CommandBuffer, buffer.buffer, 0, IndexType.Uint32 );
+
+		return RenderStatus.Ok;
+	}
+
+	public RenderStatus Draw( int vertexCount, int indexCount, int instanceCount )
+	{
+		Vk.CmdDrawIndexed( _mainContext.CommandBuffer, (uint)indexCount, (uint)instanceCount, 0, 0, 0 );
+
+		return RenderStatus.Ok;
+	}
+
+	public RenderStatus BindRenderTarget( RenderTexture rt )
+	{
+		if ( IsRenderPassActive )
+		{
+			Vk.CmdEndRendering( _mainContext.CommandBuffer );
+		}
+
+		var renderTexture = RenderTextures.Get( rt.Handle );
+
+		var startImageMemoryBarrier = VKInit.ImageMemoryBarrier( AccessFlags.ColorAttachmentWriteBit, ImageLayout.Undefined, ImageLayout.ColorAttachmentOptimal, renderTexture.Image );
+
+		Vk.CmdPipelineBarrier( _mainContext.CommandBuffer, PipelineStageFlags.ColorAttachmentOutputBit, PipelineStageFlags.TopOfPipeBit, 0, 0, default, 0, default, 1, startImageMemoryBarrier );
+
+		var colorClear = new ClearValue() { Color = new ClearColorValue(0f, 0f, 0f, 1f) };
+		var depthClear = new ClearValue();
+		depthClear.DepthStencil = new ClearDepthStencilValue( 1.0f, 0 );
+
+		var colorAttachmentInfo = VKInit.RenderingAttachmentInfo( renderTexture.ImageView, ImageLayout.ColorAttachmentOptimal );
+		colorAttachmentInfo.ClearValue = colorClear;
+
+		var depthAttachmentInfo = VKInit.RenderingAttachmentInfo( _depthTarget.ImageView, ImageLayout.DepthStencilAttachmentOptimal );
+		depthAttachmentInfo.ClearValue = depthClear;
+
+		var renderInfo = VKInit.RenderingInfo( colorAttachmentInfo, depthAttachmentInfo, new Extent2D( renderTexture.Size.Width, renderTexture.Size.Height ) );
+		Vk.CmdBeginRendering( _mainContext.CommandBuffer, renderInfo );
+
+		return RenderStatus.Ok;
+	}
+
+	public RenderStatus GetRenderSize( out Vector2 size )
+	{
+		throw new NotImplementedException();
+	}
+
+	public RenderStatus GetGPUInfo( out GPUInfo info )
+	{
+		throw new NotImplementedException();
+	}
+
+	public RenderStatus GetWindowSize( out Vector2 size )
+	{
+		throw new NotImplementedException();
+	}
+
+	public void UpdateWindow()
+	{
+		throw new NotImplementedException();
+	}
+
+	public bool GetWindowCloseRequested()
+	{
+		throw new NotImplementedException();
 	}
 }

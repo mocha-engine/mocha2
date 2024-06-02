@@ -18,13 +18,13 @@ jobs:
         dotnet-version: '8.0.x'
 
     - name: Restore dependencies
-      run: dotnet restore source/mocha.sln
+      run: dotnet restore Source/Mocha.sln
 
     - name: Build
-      run: dotnet publish --output "C:\temp\build" -c Release -r win-x64 source/mocha.sln
+      run: dotnet publish --output "C:\temp\build" -c Release -r win-x64 Source/Mocha.sln
 
     - name: Test
-      run: dotnet test --no-build --verbosity normal source/mocha.sln
+      run: dotnet test --no-build --verbosity normal Source/Mocha.sln
 
     - name: Build Success
       uses: rjstone/discord-webhook-notify@v1

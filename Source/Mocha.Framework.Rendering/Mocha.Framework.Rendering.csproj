@@ -21,12 +21,12 @@
 	</ItemGroup>
 
 	<ItemGroup>
-		<ProjectReference Include="..\mocha.common\mocha.common.csproj" />
-		<ProjectReference Include="..\thirdparty\vmasharp\VMASharp.csproj" />
+		<ProjectReference Include="..\Mocha.Common\Mocha.Common.csproj" />
+		<ProjectReference Include="..\ThirdParty\VMASharp\VMASharp.csproj" />
 	</ItemGroup>
 
 	<ItemGroup>
-		<ProjectReference Include="..\mocha.generators\mocha.generators.csproj" OutputItemType="Analyzer" ReferenceOutputAssembly="false" />
+		<ProjectReference Include="..\Mocha.Generators\Mocha.Generators.csproj" OutputItemType="Analyzer" ReferenceOutputAssembly="false" />
 	</ItemGroup>
 
 </Project>

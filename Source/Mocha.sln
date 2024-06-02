@@ -21,7 +21,7 @@ Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "Mocha.Common", "Mocha.Commo
 EndProject
 Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "Mocha.Framework.Rendering", "Mocha.Framework.Rendering\Mocha.Framework.Rendering.csproj", "{5843FDC3-DBE5-4D9E-BF9D-222A60435185}"
 EndProject
-Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "Mocha.ResourceCompiler", "mocha.ResourceCompiler\Mocha.ResourceCompiler.csproj", "{2051BD3A-81EB-49CF-9867-1E55F6D2BCB4}"
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "Mocha.ResourceCompiler", "Mocha.ResourceCompiler\Mocha.ResourceCompiler.csproj", "{2051BD3A-81EB-49CF-9867-1E55F6D2BCB4}"
 EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution

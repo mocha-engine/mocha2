@@ -16,7 +16,7 @@ public class GameInfo
 	{
 		// HACK: can't load FileSystem at this stage because it cause a circular
 		// dependency so we'll just load directly from the disk
-		var jsonContents = System.IO.File.ReadAllText( "./fs/.mocha/config/game.json" );
+		var jsonContents = System.IO.File.ReadAllText( "./fs/mocha/config/game.json" );
 		Current = JsonSerializer.Deserialize<GameInfo>( jsonContents ) ?? throw new Exception( "Couldn't load 'game.json'?" );
 	}
 }

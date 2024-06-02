@@ -7,7 +7,7 @@ public class FileSystem
 	/// <summary>
 	/// Used to fetch configuration data (usually in TOML format).
 	/// </summary>
-	internal static FileSystem Config { get; } = new FileSystem( "./fs/.mocha/config/" );
+	internal static FileSystem Config { get; } = new FileSystem( "./fs/mocha/config/" );
 	
 	public static FileSystem Content { get; } = new FileSystem( GameInfo.Current.FileSystem.MountPaths.Content );
 	internal static FileSystem ContentSrc { get; } = new FileSystem( GameInfo.Current.FileSystem.MountPaths.Source );

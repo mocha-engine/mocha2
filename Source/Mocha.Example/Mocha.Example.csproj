@@ -11,4 +11,8 @@
     <ProjectReference Include="..\mocha\mocha.csproj" />
   </ItemGroup>
 
+  <Target Name="PostBuild" AfterTargets="PostBuildEvent">
+    <Exec Command="xcopy $(ProjectDir)fs\.mocha\ $(TargetDir)fs\.mocha\ /y /e /q&#xD;&#xA;xcopy $(ProjectDir)fs\content\ $(TargetDir)fs\content\ /y /e /q" />
+  </Target>
+
 </Project>

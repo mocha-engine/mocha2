@@ -25,7 +25,7 @@ public static class ResourceCompiler
 
 		foreach ( var compiler in compilers )
 		{
-			foreach ( var extension in compiler.GetType().GetCustomAttribute<CompilerAttribute>()?.SourceExtensions )
+			foreach ( var extension in compiler.GetType().GetCustomAttribute<CompilerAttribute>()?.SourceExtensions! )
 			{
 				var matchingFiles = CachedFileSystem.GetAllFilesWithExtension( extension );
 				queue.AddRange( matchingFiles );
@@ -115,7 +115,7 @@ public static class ResourceCompiler
 
 		try
 		{
-			result = await compiler!.CompileFile( new CompileInput( file.RawData, file.Path ) );
+			result = await compiler!.CompileFile( new CompileInput( file!.RawData!, file.Path ) );
 		}
 		catch ( Exception ex )
 		{
@@ -127,10 +127,10 @@ public static class ResourceCompiler
 			{
 				var destPath = file.Path.NormalizePath();
 				destPath = destPath[..destPath.IndexOf(".")];
-				destPath += compilerAttribute.OutputExtension;
+				destPath += compilerAttribute!.OutputExtension;
 				
-				FileSystem.Content.CreateDirectory( Path.GetDirectoryName( destPath ).NormalizePath() );
-				FileSystem.Content.WriteAllBytes( destPath, result.CompileData );
+				FileSystem.Content.CreateDirectory( Path.GetDirectoryName( destPath )?.NormalizePath() ?? "" );
+				FileSystem.Content.WriteAllBytes( destPath, result!.CompileData! );
 
 				Global.CompileTracker.IsCompiled( file.Path.NormalizePath() );
 			}

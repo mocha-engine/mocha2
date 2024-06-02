@@ -654,7 +654,7 @@ namespace VMASharp
             MemoryAllocateFlagsInfoKHR allocFlagsInfo = new MemoryAllocateFlagsInfoKHR(StructureType.MemoryAllocateFlagsInfoKhr);
             if (Allocator.UseKhrBufferDeviceAddress)
             {
-                allocFlagsInfo.Flags = MemoryAllocateFlags.MemoryAllocateDeviceAddressBitKhr;
+                allocFlagsInfo.Flags = MemoryAllocateFlags.AddressBitKhr;
                 info.PNext = &allocFlagsInfo;
             }
 

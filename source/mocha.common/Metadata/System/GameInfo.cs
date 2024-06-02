@@ -5,9 +5,9 @@ namespace Mocha;
 
 public class GameInfo
 {
-	public string? Game { get; set; }
-	public string? Title { get; set; }
-	public FileSystemInfo? FileSystem { get; set; }  
+	public string Game { get; set; } = "Game";
+	public string Title { get; set; } = "Game";
+	public FileSystemInfo FileSystem { get; set; } = null!;
 
 	[JsonIgnore]
 	public static GameInfo Current { get; set; }

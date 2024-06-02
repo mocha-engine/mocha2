@@ -17,10 +17,7 @@ public class PathPropertySourceGenerator : ISourceGenerator
 		foreach ( var propertyDeclaration in receiver.CandidateProperties )
 		{
 			string propertyName = propertyDeclaration.Identifier.Text;
-			string className = (propertyDeclaration.Parent as ClassDeclarationSyntax)?.Identifier.Text;
-			string namespaceName = (propertyDeclaration.Parent as ClassDeclarationSyntax)?.Parent is NamespaceDeclarationSyntax namespaceDeclaration
-				? namespaceDeclaration.Name.ToString()
-				: null;
+			string className = (propertyDeclaration.Parent as ClassDeclarationSyntax)?.Identifier.Text ?? "Unnamed";
 
 			string source = @$"
 namespace Mocha.ResourceCompiler

@@ -21,6 +21,6 @@ using Mocha.Rendering;
 
 public static class Globals
 {
-	public static Logger Log { get; } = new();
-	internal static IRenderContext Render => IRenderContext.Current;
+    public static Logger Log { get; } = new();
+    internal static IRenderContext Render => IRenderContext.Current;
 }

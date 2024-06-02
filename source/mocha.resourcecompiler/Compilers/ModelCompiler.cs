@@ -6,9 +6,9 @@ namespace Mocha.ResourceCompiler;
 public class ModelCompiler : IAssetCompiler
 {
 	/// <inheritdoc />
-	public async Task<CompileResult> CompileFile( CompileInput compileInput )
+	public Task<CompileResult> CompileFile( CompileInput compileInput )
 	{
 		// Just copy directly
-		return CompileResult.Success( compileInput.RawData );
+		return Task.FromResult(CompileResult.Success( compileInput.RawData ));
 	}
 }

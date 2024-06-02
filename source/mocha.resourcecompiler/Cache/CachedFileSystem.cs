@@ -10,7 +10,7 @@ public static class CachedFileSystem
 		AddDirectory( "" );
 	}
 
-	public static bool TryGetFile( string path, out CachedFile file )
+	public static bool TryGetFile( string path, out CachedFile? file )
 	{
 		return FileSystem.TryGetValue( path, out file );
 	}

@@ -46,7 +46,7 @@ public static class PbrTextureConverter
 	private static void ConvertTextureMaps( string colorMapFile, string destinationDirectory )
 	{
 		var baseMaterialName = Path.GetFileNameWithoutExtension( colorMapFile ).Replace( "_color", "" );
-		var sourcePath = Path.GetDirectoryName( colorMapFile );
+		var sourcePath = Path.GetDirectoryName( colorMapFile ) ?? "";
 		var materialPath = Path.Combine( sourcePath, baseMaterialName );
 
 		Directory.CreateDirectory( destinationDirectory );

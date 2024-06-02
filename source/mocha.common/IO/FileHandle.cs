@@ -32,7 +32,8 @@ public class FileHandle : IDisposable
 		try
 		{
 			// return a copy to prevent modification
-			return (byte[])_fileDataCache.Clone();
+			var cache = _fileDataCache ?? [];
+			return (byte[])cache.Clone();
 		}
 		finally
 		{

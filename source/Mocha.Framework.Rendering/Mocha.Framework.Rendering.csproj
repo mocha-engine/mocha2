@@ -1,16 +1,15 @@
 ﻿<Project Sdk="Microsoft.NET.Sdk">
 
-	<PropertyGroup>
-		<OutputType>Library</OutputType>
-		<TargetFramework>net8.0</TargetFramework>
-		<ImplicitUsings>enable</ImplicitUsings>
-		<Nullable>enable</Nullable>
-		<AllowUnsafeBlocks>true</AllowUnsafeBlocks>
-		<RootNamespace>Mocha</RootNamespace>
-	</PropertyGroup>
+  <PropertyGroup>
+	  <OutputType>Library</OutputType>
+	  <TargetFramework>net8.0</TargetFramework>
+	  <ImplicitUsings>enable</ImplicitUsings>
+	  <Nullable>enable</Nullable>
+	  <AllowUnsafeBlocks>true</AllowUnsafeBlocks>
+	  <RootNamespace>Mocha</RootNamespace>
+  </PropertyGroup>
 
 	<ItemGroup>
-		<PackageReference Include="FlexLayoutSharp" Version="1.0.0" />
 		<PackageReference Include="Silk.NET.Maths" Version="2.21.0" />
 		<PackageReference Include="Silk.NET.Vulkan" Version="2.21.0" />
 		<PackageReference Include="Silk.NET.Vulkan.Extensions.EXT" Version="2.21.0" />
@@ -23,22 +22,11 @@
 
 	<ItemGroup>
 		<ProjectReference Include="..\mocha.common\mocha.common.csproj" />
-		<ProjectReference Include="..\Mocha.Framework.Rendering\Mocha.Framework.Rendering.csproj" />
 		<ProjectReference Include="..\thirdparty\vmasharp\VMASharp.csproj" />
-	</ItemGroup>
-
-	<ItemGroup>
-		<None Update="Shaders\frag.glsl">
-			<CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
-		</None>
-		<None Update="Shaders\vert.glsl">
-			<CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
-		</None>
 	</ItemGroup>
 
 	<ItemGroup>
 		<ProjectReference Include="..\mocha.generators\mocha.generators.csproj" OutputItemType="Analyzer" ReferenceOutputAssembly="false" />
 	</ItemGroup>
-
 
 </Project>

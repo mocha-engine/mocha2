@@ -40,6 +40,9 @@ public static class Preprocessor
 
 		foreach ( var item in list )
 		{
+			if (item.Preprocessor is null || item.Folder is null || item.Destination is null)
+				continue;
+
 			if ( !Preprocessors.TryGetValue( item.Preprocessor, out var preprocessorType ) )
 			{
 				throw new( $"Preprocessor '{item.Preprocessor}' not found" );
@@ -48,7 +51,7 @@ public static class Preprocessor
 			var sourceDirectory = Path.Combine( rootDir, item.Folder[1..] );
 			var targetDirectory = Path.Combine( rootDir, item.Destination[1..] );
 
-			preprocessorType.GetMethod( "ProcessDirectory" ).Invoke( null, new[] { sourceDirectory, targetDirectory } );
+			preprocessorType.GetMethod( "ProcessDirectory" )!.Invoke( null, new[] { sourceDirectory, targetDirectory } );
 		}
 	}
 }

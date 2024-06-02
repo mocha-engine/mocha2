@@ -219,38 +219,38 @@ namespace VMASharp
                 case MemoryUsage.Unknown:
                     break;
                 case MemoryUsage.GPU_Only:
-                    if (this.IsIntegratedGPU || (preferredFlags & MemoryPropertyFlags.MemoryPropertyHostVisibleBit) == 0)
+                    if (this.IsIntegratedGPU || (preferredFlags & MemoryPropertyFlags.HostVisibleBit) == 0)
                     {
-                        preferredFlags |= MemoryPropertyFlags.MemoryPropertyDeviceLocalBit;
+                        preferredFlags |= MemoryPropertyFlags.DeviceLocalBit;
                     }
                     break;
                 case MemoryUsage.CPU_Only:
-                    requiredFlags |= MemoryPropertyFlags.MemoryPropertyHostVisibleBit | MemoryPropertyFlags.MemoryPropertyHostCoherentBit;
+                    requiredFlags |= MemoryPropertyFlags.HostVisibleBit | MemoryPropertyFlags.HostCoherentBit;
                     break;
                 case MemoryUsage.CPU_To_GPU:
-                    requiredFlags |= MemoryPropertyFlags.MemoryPropertyHostVisibleBit;
-                    if (!this.IsIntegratedGPU || (preferredFlags & MemoryPropertyFlags.MemoryPropertyHostVisibleBit) == 0)
+                    requiredFlags |= MemoryPropertyFlags.HostVisibleBit;
+                    if (!this.IsIntegratedGPU || (preferredFlags & MemoryPropertyFlags.HostVisibleBit) == 0)
                     {
-                        preferredFlags |= MemoryPropertyFlags.MemoryPropertyDeviceLocalBit;
+                        preferredFlags |= MemoryPropertyFlags.DeviceLocalBit;
                     }
                     break;
                 case MemoryUsage.GPU_To_CPU:
-                    requiredFlags |= MemoryPropertyFlags.MemoryPropertyHostVisibleBit;
-                    preferredFlags |= MemoryPropertyFlags.MemoryPropertyHostCachedBit;
+                    requiredFlags |= MemoryPropertyFlags.HostVisibleBit;
+                    preferredFlags |= MemoryPropertyFlags.HostCachedBit;
                     break;
                 case MemoryUsage.CPU_Copy:
-                    notPreferredFlags |= MemoryPropertyFlags.MemoryPropertyDeviceLocalBit;
+                    notPreferredFlags |= MemoryPropertyFlags.DeviceLocalBit;
                     break;
                 case MemoryUsage.GPU_LazilyAllocated:
-                    requiredFlags |= MemoryPropertyFlags.MemoryPropertyLazilyAllocatedBit;
+                    requiredFlags |= MemoryPropertyFlags.LazilyAllocatedBit;
                     break;
                 default:
                     throw new ArgumentException("Invalid Usage Flags");
             }
 
-            if (((allocInfo.RequiredFlags | allocInfo.PreferredFlags) & (MemoryPropertyFlags.MemoryPropertyDeviceCoherentBitAmd | MemoryPropertyFlags.MemoryPropertyDeviceUncachedBitAmd)) == 0)
+            if (((allocInfo.RequiredFlags | allocInfo.PreferredFlags) & (MemoryPropertyFlags.DeviceCoherentBitAmd | MemoryPropertyFlags.DeviceUncachedBitAmd)) == 0)
             {
-                notPreferredFlags |= MemoryPropertyFlags.MemoryPropertyDeviceCoherentBitAmd;
+                notPreferredFlags |= MemoryPropertyFlags.DeviceCoherentBitAmd;
             }
 
             int? memoryTypeIndex = null;
@@ -536,7 +536,7 @@ namespace VMASharp
 
         internal bool IsMemoryTypeNonCoherent(int memTypeIndex)
         {
-            return (MemoryTypes[memTypeIndex].PropertyFlags & (MemoryPropertyFlags.MemoryPropertyHostVisibleBit | MemoryPropertyFlags.MemoryPropertyHostCoherentBit)) == MemoryPropertyFlags.MemoryPropertyHostVisibleBit;
+            return (MemoryTypes[memTypeIndex].PropertyFlags & (MemoryPropertyFlags.HostVisibleBit | MemoryPropertyFlags.HostCoherentBit)) == MemoryPropertyFlags.HostVisibleBit;
         }
 
         internal long GetMemoryTypeMinAlignment(int memTypeIndex)
@@ -566,8 +566,8 @@ namespace VMASharp
             VkApi.GetBufferMemoryRequirements2(this.Device, &req, &memReq2);
 
             memReq = memReq2.MemoryRequirements;
-            requiresDedicatedAllocation = dedicatedRequirements.RequiresDedicatedAllocation != 0;
-            prefersDedicatedAllocation = dedicatedRequirements.PrefersDedicatedAllocation != 0;
+            requiresDedicatedAllocation = dedicatedRequirements.RequiresDedicatedAllocation;
+            prefersDedicatedAllocation = dedicatedRequirements.PrefersDedicatedAllocation;
         }
 
         internal void GetImageMemoryRequirements(Image image, out MemoryRequirements memReq, out bool requiresDedicatedAllocation, out bool prefersDedicatedAllocation)
@@ -592,8 +592,8 @@ namespace VMASharp
             VkApi.GetImageMemoryRequirements2(this.Device, &req, &memReq2);
 
             memReq = memReq2.MemoryRequirements;
-            requiresDedicatedAllocation = dedicatedRequirements.RequiresDedicatedAllocation != 0;
-            prefersDedicatedAllocation = dedicatedRequirements.PrefersDedicatedAllocation != 0;
+            requiresDedicatedAllocation = dedicatedRequirements.RequiresDedicatedAllocation;
+            prefersDedicatedAllocation = dedicatedRequirements.PrefersDedicatedAllocation;
         }
 
         internal Allocation AllocateMemory(in MemoryRequirements memReq, in DedicatedAllocationInfo dedicatedInfo,
@@ -641,7 +641,7 @@ namespace VMASharp
 
                 AllocationCreateInfo infoForPool = createInfo;
 
-                if ((createInfo.Flags & AllocationCreateFlags.Mapped) != 0 && (this.MemoryTypes[memoryTypeIndex].PropertyFlags & MemoryPropertyFlags.MemoryPropertyHostVisibleBit) == 0)
+                if ((createInfo.Flags & AllocationCreateFlags.Mapped) != 0 && (this.MemoryTypes[memoryTypeIndex].PropertyFlags & MemoryPropertyFlags.HostVisibleBit) == 0)
                 {
                     infoForPool.Flags &= ~AllocationCreateFlags.Mapped;
                 }
@@ -1058,7 +1058,7 @@ namespace VMASharp
         internal void FillAllocation(Allocation allocation, byte pattern)
         {
             if (Helpers.DebugInitializeAllocations && !allocation.CanBecomeLost &&
-                (this.MemoryTypes[allocation.MemoryTypeIndex].PropertyFlags & MemoryPropertyFlags.MemoryPropertyHostVisibleBit) != 0)
+                (this.MemoryTypes[allocation.MemoryTypeIndex].PropertyFlags & MemoryPropertyFlags.HostVisibleBit) != 0)
             {
                 IntPtr pData = allocation.Map();
 
@@ -1097,7 +1097,7 @@ namespace VMASharp
         {
             var finalCreateInfo = createInfo;
 
-            if ((finalCreateInfo.Flags & AllocationCreateFlags.Mapped) != 0 && (this.MemoryTypes[memoryTypeIndex].PropertyFlags & MemoryPropertyFlags.MemoryPropertyHostVisibleBit) == 0)
+            if ((finalCreateInfo.Flags & AllocationCreateFlags.Mapped) != 0 && (this.MemoryTypes[memoryTypeIndex].PropertyFlags & MemoryPropertyFlags.HostVisibleBit) == 0)
             {
                 finalCreateInfo.Flags &= ~AllocationCreateFlags.Mapped;
             }
@@ -1222,7 +1222,7 @@ namespace VMASharp
                 if (dedicatedInfo.DedicatedBuffer.Handle != default)
                 {
                     canContainBufferWithDeviceAddress = dedicatedInfo.DedicatedBufferUsage == UnknownBufferUsage
-                        || (dedicatedInfo.DedicatedBufferUsage & BufferUsageFlags.BufferUsageShaderDeviceAddressBitKhr) != 0;
+                        || (dedicatedInfo.DedicatedBufferUsage & BufferUsageFlags.ShaderDeviceAddressBitKhr) != 0;
                 }
                 else if (dedicatedInfo.DedicatedImage.Handle != default)
                 {
@@ -1231,7 +1231,7 @@ namespace VMASharp
 
                 if (canContainBufferWithDeviceAddress)
                 {
-                    allocFlagsInfo.Flags = MemoryAllocateFlags.MemoryAllocateDeviceAddressBit;
+                    allocFlagsInfo.Flags = MemoryAllocateFlags.AddressBit;
                     allocFlagsInfo.PNext = allocInfo.PNext;
                     allocInfo.PNext = &allocFlagsInfo;
                 }
@@ -1293,7 +1293,7 @@ namespace VMASharp
                 // Exclude memory types that have VK_MEMORY_PROPERTY_DEVICE_COHERENT_BIT_AMD.
                 for (int index = 0; index < this.MemoryTypeCount; ++index)
                 {
-                    if ((this.MemoryTypes[index].PropertyFlags & MemoryPropertyFlags.MemoryPropertyDeviceCoherentBitAmd) != 0)
+                    if ((this.MemoryTypes[index].PropertyFlags & MemoryPropertyFlags.DeviceCoherentBitAmd) != 0)
                     {
                         memoryTypeBits &= ~(1u << index);
                     }

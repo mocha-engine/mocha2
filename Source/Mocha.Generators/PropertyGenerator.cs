@@ -8,7 +8,7 @@ using System.Threading;
 
 namespace Mocha.Generators
 {
-	[Generator( LanguageNames.CSharp )]
+	[Generator(LanguageNames.CSharp)]
 	public class PropertyGenerator : IIncrementalGenerator
 	{
 		private const string WithPropertyAttributeHint = "WithPropertyAttribute.g.cs";
@@ -64,7 +64,7 @@ namespace Mocha.Generators
 
 			var groups = withPropertyData.GroupBy(entry => entry.ContainerFQN);
 
-			foreach ( var group in groups )
+			foreach (var group in groups)
 			{
 				var firstEntry = group.First();
 
@@ -72,7 +72,7 @@ namespace Mocha.Generators
 				var containerName = firstEntry.ContainerName;
 
 				// Start group namespace
-				if ( !string.IsNullOrWhiteSpace(containingNamespace) )
+				if (!string.IsNullOrWhiteSpace(containingNamespace))
 				{
 					writer.WriteLine($"namespace {containingNamespace}");
 					writer.WriteLine("{");
@@ -84,7 +84,7 @@ namespace Mocha.Generators
 				writer.WriteLine("{");
 				writer.Indent++;
 
-				foreach ( var entry in group )
+				foreach (var entry in group)
 				{
 					var propertyName = entry.RequestedPropertyName;
 					if (propertyName is null)
@@ -104,7 +104,7 @@ namespace Mocha.Generators
 				writer.WriteLine("}");
 				// End group containing type(s)
 
-				if ( !string.IsNullOrWhiteSpace(containingNamespace) )
+				if (!string.IsNullOrWhiteSpace(containingNamespace))
 				{
 					writer.Indent--;
 					writer.WriteLine("}");
@@ -152,8 +152,8 @@ namespace Mocha.Generators
 			public readonly bool IsError;
 			public readonly ImmutableArray<Diagnostic> Diagnostics;
 
-			public WithPropertyData( string containerFQN, string targetName, string? requestedPropertyName, string typeFQN,
-				string containerName, string? containingNamespace, ImmutableArray<Diagnostic> diagnostics )
+			public WithPropertyData(string containerFQN, string targetName, string? requestedPropertyName, string typeFQN,
+				string containerName, string? containingNamespace, ImmutableArray<Diagnostic> diagnostics)
 			{
 				ContainerFQN = containerFQN;
 				TargetName = targetName;
@@ -166,7 +166,7 @@ namespace Mocha.Generators
 				Diagnostics = diagnostics;
 			}
 
-			public WithPropertyData( ImmutableArray<Diagnostic> diagnostics )
+			public WithPropertyData(ImmutableArray<Diagnostic> diagnostics)
 			{
 				ContainerFQN = string.Empty;
 				TargetName = string.Empty;
@@ -180,25 +180,25 @@ namespace Mocha.Generators
 			}
 		}
 
-		private static string GetPropertyName( string fieldName )
+		private static string GetPropertyName(string fieldName)
 		{
 			var sb = new StringBuilder();
 
-			for ( int i = 0; i < fieldName.Length; i++ )
+			for (int i = 0; i < fieldName.Length; i++)
 			{
 				char c = fieldName[i];
-				
-				if ( c == '_' )
+
+				if (c == '_')
 				{
-					sb.Append( char.ToUpper( fieldName[i + 1] ) );
+					sb.Append(char.ToUpper(fieldName[i + 1]));
 					i++;
 				}
 				else
 				{
-					sb.Append( c );
+					sb.Append(c);
 				}
 			}
-			
+
 			return sb.ToString();
 		}
 	}

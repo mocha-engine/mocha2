@@ -7,7 +7,7 @@ using System.Threading;
 
 namespace Mocha.Generators
 {
-	[Generator( LanguageNames.CSharp )]
+	[Generator(LanguageNames.CSharp)]
 	public class ResourceGenerator : IIncrementalGenerator
 	{
 		private const string ResourceAttributeHint = "ResourceAttribute.g.cs";
@@ -29,7 +29,7 @@ namespace Mocha.Generators
 
 		private void PostInitialize(IncrementalGeneratorPostInitializationContext context)
 		{
-			context.AddSource( ResourceAttributeHint, $$"""
+			context.AddSource(ResourceAttributeHint, $$"""
 				namespace Mocha;
 
 				/// <summary>
@@ -60,20 +60,20 @@ namespace Mocha.Generators
 
 			var groups = resourceData.GroupBy(resource => resource.ContainingNamespace);
 
-			foreach ( var group in groups )
+			foreach (var group in groups)
 			{
 				var firstEntry = group.First();
 				var containingNamespace = firstEntry.ContainingNamespace;
 
 				// Start group namespace
-				if ( !string.IsNullOrWhiteSpace( containingNamespace ) )
+				if (!string.IsNullOrWhiteSpace(containingNamespace))
 				{
 					writer.WriteLine($"namespace {containingNamespace}");
 					writer.WriteLine("{");
 					writer.Indent++;
 				}
 
-				foreach ( var entry in group )
+				foreach (var entry in group)
 				{
 					// Start entry type
 					writer.WriteLine($"partial struct {entry.TypeName}");
@@ -158,7 +158,7 @@ namespace Mocha.Generators
 			public readonly bool IsError;
 			public readonly ImmutableArray<Diagnostic> Diagnostics;
 
-			public ResourceData( string? containingNamespace, string typeName, ImmutableArray<Diagnostic> diagnostics )
+			public ResourceData(string? containingNamespace, string typeName, ImmutableArray<Diagnostic> diagnostics)
 			{
 				ContainingNamespace = containingNamespace;
 				TypeName = typeName;
@@ -167,7 +167,7 @@ namespace Mocha.Generators
 				Diagnostics = diagnostics;
 			}
 
-			public ResourceData( ImmutableArray<Diagnostic> diagnostics )
+			public ResourceData(ImmutableArray<Diagnostic> diagnostics)
 			{
 				ContainingNamespace = null;
 				TypeName = string.Empty;

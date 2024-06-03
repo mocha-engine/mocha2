@@ -142,7 +142,7 @@ namespace Mocha.Generators
 				containingNamespace, []);
 		}
 
-		private record struct WithPropertyData
+		private readonly record struct WithPropertyData
 		{
 			public readonly string ContainerFQN;
 			public readonly string TargetName;
@@ -152,7 +152,7 @@ namespace Mocha.Generators
 			public readonly string? ContainingNamespace;
 
 			public readonly bool IsError;
-			public ImmutableArray<Diagnostic> Diagnostics;
+			public readonly ImmutableArray<Diagnostic> Diagnostics;
 
 			public WithPropertyData( string containerFQN, string targetName, string? requestedPropertyName, string typeFQN,
 				string containerName, string? containingNamespace, ImmutableArray<Diagnostic> diagnostics )

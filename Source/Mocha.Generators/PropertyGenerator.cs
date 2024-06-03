@@ -29,8 +29,6 @@ namespace Mocha.Generators
 		private void PostInitialize(IncrementalGeneratorPostInitializationContext context)
 		{
 			context.AddSource(WithPropertyAttributeHint, """
-				using System;
-
 				namespace Mocha;
 
 				/// <summary>
@@ -38,8 +36,8 @@ namespace Mocha.Generators
 				/// <b>Note:</b> this structure must be marked as partial.
 				/// </para>
 				/// </summary>
-				[AttributeUsage( AttributeTargets.Field, AllowMultiple = false, Inherited = false )]
-				public class WithPropertyAttribute : Attribute
+				[global::System.AttributeUsage( global::System.AttributeTargets.Field, AllowMultiple = false, Inherited = false )]
+				public class WithPropertyAttribute : global::System.Attribute
 				{
 					public string? Name { get; }
 

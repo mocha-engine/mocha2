@@ -1,5 +1,4 @@
 ﻿using Microsoft.CodeAnalysis;
-using Microsoft.CodeAnalysis.CSharp.Syntax;
 using System.CodeDom.Compiler;
 using System.Collections.Immutable;
 using System.IO;
@@ -12,10 +11,10 @@ namespace Mocha.Generators
 	[Generator( LanguageNames.CSharp )]
 	public class PropertyGenerator : IIncrementalGenerator
 	{
-        private const string WithPropertyAttributeHint = "WithPropertyAttribute.g.cs";
-        private const string OutputFileHint = "WithPropertyGen.g.cs";
+		private const string WithPropertyAttributeHint = "WithPropertyAttribute.g.cs";
+		private const string OutputFileHint = "WithPropertyGen.g.cs";
 
-        private const string WithPropertyAttribute = "Mocha.WithPropertyAttribute";
+		private const string WithPropertyAttribute = "Mocha.WithPropertyAttribute";
 
 		public void Initialize(IncrementalGeneratorInitializationContext context)
 		{
@@ -27,8 +26,8 @@ namespace Mocha.Generators
 			context.RegisterSourceOutput(provider.Collect(), Execute);
 		}
 
-        private void PostInitialize(IncrementalGeneratorPostInitializationContext context)
-        {
+		private void PostInitialize(IncrementalGeneratorPostInitializationContext context)
+		{
 			context.AddSource(WithPropertyAttributeHint, """
 				using System;
 
@@ -55,9 +54,9 @@ namespace Mocha.Generators
 					}
 				}
 				""");
-        }
+		}
 
-        private static void Execute(SourceProductionContext context, ImmutableArray<WithPropertyData> withPropertyData)
+		private static void Execute(SourceProductionContext context, ImmutableArray<WithPropertyData> withPropertyData)
 		{
 			using var output = new StringWriter();
 			using var writer = new IndentedTextWriter(output);

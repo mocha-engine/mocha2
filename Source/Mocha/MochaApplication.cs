@@ -17,10 +17,16 @@ public class MochaApplication : IDisposable
 
 	public void Run()
 	{
-		if ( !Veldrid.RenderDoc.Load( out var renderDoc ) )
+		Environment.GetCommandLineArgs().ToList().ForEach( arg =>
 		{
-			Log.Error( "Failed to initialize renderdoc" );
-		}
+			if ( arg == "--renderdoc" )
+			{
+				if ( !Veldrid.RenderDoc.Load( out var renderDoc ) )
+				{
+					Log.Error( "Failed to initialize renderdoc" );
+				}
+			}
+		} );
 
 		OnPreBootstrap();
 

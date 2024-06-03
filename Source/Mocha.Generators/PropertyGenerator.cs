@@ -12,17 +12,50 @@ namespace Mocha.Generators
 	[Generator( LanguageNames.CSharp )]
 	public class PropertyGenerator : IIncrementalGenerator
 	{
+        private const string WithPropertyAttributeHint = "WithPropertyAttribute.g.cs";
         private const string OutputFileHint = "WithPropertyGen.g.cs";
 
         private const string WithPropertyAttribute = "Mocha.WithPropertyAttribute";
 
 		public void Initialize(IncrementalGeneratorInitializationContext context)
 		{
+			context.RegisterPostInitializationOutput(PostInitialize);
+
 			var provider = context.SyntaxProvider.ForAttributeWithMetadataName(WithPropertyAttribute, SyntaxPredicate, TransformWithPropertyAttribute)
 				.Where(obj => obj != default);
 
 			context.RegisterSourceOutput(provider.Collect(), Execute);
 		}
+
+        private void PostInitialize(IncrementalGeneratorPostInitializationContext context)
+        {
+			context.AddSource(WithPropertyAttributeHint, """
+				using System;
+
+				namespace Mocha;
+
+				/// <summary>
+				/// <para>
+				/// <b>Note:</b> this structure must be marked as partial.
+				/// </para>
+				/// </summary>
+				[AttributeUsage( AttributeTargets.Field, AllowMultiple = false, Inherited = false )]
+				public class WithPropertyAttribute : Attribute
+				{
+					public string? Name { get; }
+
+					public WithPropertyAttribute()
+					{
+
+					}
+
+					public WithPropertyAttribute( string name )
+					{
+						Name = name;
+					}
+				}
+				""");
+        }
 
         private static void Execute(SourceProductionContext context, ImmutableArray<WithPropertyData> withPropertyData)
 		{

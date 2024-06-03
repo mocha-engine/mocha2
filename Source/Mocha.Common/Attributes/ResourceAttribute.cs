@@ -11,7 +11,7 @@
 /// <b>Note:</b> this structure must be marked as partial.
 /// </para>
 /// </summary>
-[AttributeUsage( AttributeTargets.Struct )]
+[AttributeUsage( AttributeTargets.Struct, AllowMultiple = false, Inherited = false )]
 public class ResourceAttribute : Attribute
 {
 }

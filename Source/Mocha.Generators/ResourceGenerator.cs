@@ -10,16 +10,42 @@ namespace Mocha.Generators
 	[Generator( LanguageNames.CSharp )]
 	public class ResourceGenerator : IIncrementalGenerator
 	{
+		private const string ResourceAttributeHint = "ResourceAttribute.g.cs";
 		private const string OutputFileHint = "ResourceGen.g.cs";
 
 		private const string ResourceAttribute = "Mocha.ResourceAttribute";
 
 		public void Initialize(IncrementalGeneratorInitializationContext context)
 		{
+			context.RegisterPostInitializationOutput(PostInitialize);
+
 			var provider = context.SyntaxProvider.ForAttributeWithMetadataName(ResourceAttribute, SyntaxPredicate, TransformResourceAttribute)
 				.Where(obj => obj != default);
 
 			context.RegisterSourceOutput(provider.Collect(), Execute);
+		}
+
+		private void PostInitialize(IncrementalGeneratorPostInitializationContext context)
+		{
+			context.AddSource( ResourceAttributeHint, """
+				namespace Mocha;
+
+				/// <summary>
+				/// <para>
+				/// Specifies that this can be (de-)serialized through JSON.
+				/// </para>
+				/// <para>
+				/// Will codegen a static <c>Load( string filePath )</c> function, which loads using <see cref="FileSystem.Content" />.
+				/// </para>
+				/// <para>
+				/// <b>Note:</b> this structure must be marked as partial.
+				/// </para>
+				/// </summary>
+				[AttributeUsage( AttributeTargets.Struct, AllowMultiple = false, Inherited = false )]
+				public class ResourceAttribute : Attribute
+				{
+				}
+				""");
 		}
 
 		private void Execute(SourceProductionContext context, ImmutableArray<ResourceData> resourceData)

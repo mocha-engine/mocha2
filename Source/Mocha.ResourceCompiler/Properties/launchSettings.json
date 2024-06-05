@@ -3,7 +3,7 @@
     "mocha.resourcecompiler": {
       "commandName": "Project",
       "commandLineArgs": "--preprocess",
-      "workingDirectory": "E:\\mocha\\mocha.example"
+      "workingDirectory": "$(SolutionDir)Mocha.Example"
     }
   }
 }

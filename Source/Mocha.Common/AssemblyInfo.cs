@@ -11,13 +11,13 @@ using System.Runtime.InteropServices;
 // components.  If you need to access a type in this assembly from COM, set the ComVisible
 // attribute to true on that type.
 
-[assembly: ComVisible(false)]
+[assembly: ComVisible( false )]
 
 // The following GUID is for the ID of the typelib if this project is exposed to COM.
 
-[assembly: Guid("b162587c-2030-43f3-ae89-1160c8a692ae")]
+[assembly: Guid( "b162587c-2030-43f3-ae89-1160c8a692ae" )]
 
-[assembly: InternalsVisibleTo("mocha.resourcecompiler")]
+[assembly: InternalsVisibleTo( "mocha.resourcecompiler" )]
 [assembly: InternalsVisibleTo( "mocha" )]
 [assembly: InternalsVisibleTo( "mocha.pbrconvert" )]
 [assembly: InternalsVisibleTo( "mocha.console" )]

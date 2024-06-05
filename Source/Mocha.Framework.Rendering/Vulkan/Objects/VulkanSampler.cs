@@ -21,7 +21,7 @@ internal unsafe class VulkanSampler : VulkanObject
 	public VulkanSampler( VulkanRenderContext parent, SamplerType samplerType )
 	{
 		SetParent( parent );
-		
+
 		var createInfo = GetCreateInfo( samplerType );
 		Parent.Vk.CreateSampler( Parent.Device, ref createInfo, null, out Sampler );
 	}

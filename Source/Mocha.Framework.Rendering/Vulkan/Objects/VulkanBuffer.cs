@@ -49,16 +49,16 @@ internal unsafe class VulkanBuffer : VulkanObject
 		bufferCreateInfo.PNext = null;
 		bufferCreateInfo.Size = bufferInfo.size;
 		bufferCreateInfo.Usage = GetBufferUsageFlags( bufferInfo );
-		
+
 		AllocationCreateInfo allocInfo = new();
 		allocInfo.Usage = MemoryUsage.Unknown;
 		allocInfo.Flags = AllocationCreateFlags.Mapped;
-		
+
 		buffer = Parent.Allocator.CreateBuffer( bufferCreateInfo, allocInfo, out allocation );
-		
+
 		SetDebugName( bufferInfo.Name, ObjectType.Buffer, buffer.Handle );
 	}
-	
+
 	private struct AllocatedBuffer
 	{
 		public Buffer Buffer;
@@ -70,32 +70,32 @@ internal unsafe class VulkanBuffer : VulkanObject
 		BufferCreateInfo stagingBufferInfo = new();
 		stagingBufferInfo.SType = StructureType.BufferCreateInfo;
 		stagingBufferInfo.PNext = null;
-		
+
 		stagingBufferInfo.Size = (uint)bufferUploadInfo.Data.Length;
 		stagingBufferInfo.Usage = Silk.NET.Vulkan.BufferUsageFlags.TransferSrcBit;
-		
+
 		AllocationCreateInfo stagingAllocInfo = new();
 		stagingAllocInfo.Usage = MemoryUsage.CPU_Only;
 
 		AllocatedBuffer stagingBuffer = new();
 		stagingBuffer.Buffer = Parent.Allocator.CreateBuffer( stagingBufferInfo, stagingAllocInfo, out stagingBuffer.Allocation );
-		
+
 		var mappedData = stagingBuffer.Allocation.Map();
 		Marshal.Copy( bufferUploadInfo.Data, 0, mappedData, bufferUploadInfo.Data.Length );
 		stagingBuffer.Allocation.Unmap();
-		
+
 		Parent.ImmediateSubmit( ( CommandBuffer cmd ) =>
 		{
 			BufferCopy copyRegion = new();
 			copyRegion.SrcOffset = 0;
 			copyRegion.DstOffset = 0;
 			copyRegion.Size = (uint)bufferUploadInfo.Data.Length;
-			
+
 			Parent.Vk.CmdCopyBuffer( cmd, stagingBuffer.Buffer, buffer, 1, &copyRegion );
 
 			return RenderStatus.Ok;
 		} );
-		
+
 		stagingBuffer.Allocation.Dispose();
 	}
 

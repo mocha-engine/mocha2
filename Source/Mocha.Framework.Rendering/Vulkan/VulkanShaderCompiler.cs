@@ -16,7 +16,7 @@ public static class VulkanShaderCompiler
 		preamble.AppendLine( $"#version 460" );
 		preamble.AppendLine();
 		shaderSource = preamble.ToString() + shaderSource;
-		
+
 		// Perform the compilation
 		var compileOptions = new GlslCompileOptions( false );
 		var compileResult = SpirvCompilation.CompileGlslToSpirv( shaderSource, $"{debugName}_{shaderStage}.glsl", shaderStage, compileOptions );

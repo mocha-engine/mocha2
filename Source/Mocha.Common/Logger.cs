@@ -60,9 +60,9 @@ public class Logger
 
 	private void WriteLogMessage( string level, object obj, string dateTime, string color )
 	{
-		WriteColoredString( DateColor, "█");
+		WriteColoredString( DateColor, "█" );
 		WriteColoredString( InfoColor, $" {dateTime} ", DateColor );
-		WriteColoredString( DateColor, "█ ");
+		WriteColoredString( DateColor, "█ " );
 		WriteColoredString( color, $"{level,-12}{obj}\n" );
 
 		ResetColors();
@@ -80,7 +80,7 @@ public class Logger
 		ResetColors();
 		return text;
 	}
-	
+
 	private static string HexToAnsiRgb( string hexColor )
 	{
 		if ( hexColor.StartsWith( "#" ) )

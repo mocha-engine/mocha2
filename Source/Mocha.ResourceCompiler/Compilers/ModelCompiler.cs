@@ -9,6 +9,6 @@ public class ModelCompiler : IAssetCompiler
 	public Task<CompileResult> CompileFile( CompileInput compileInput )
 	{
 		// Just copy directly
-		return Task.FromResult(CompileResult.Success( compileInput.RawData ));
+		return Task.FromResult( CompileResult.Success( compileInput.RawData ) );
 	}
 }

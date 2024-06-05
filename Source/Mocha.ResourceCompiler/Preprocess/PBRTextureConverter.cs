@@ -109,8 +109,8 @@ public static class PbrTextureConverter
 	{
 		var assetPath = FileSystem.ContentSrc.GetRelativePath( destinationPath );
 
-		var materialData = new MaterialAsset() 
-		{ 
+		var materialData = new MaterialAsset()
+		{
 			DiffuseTexture = $"{assetPath.NormalizePath()}_diffuse.png",
 			NormalTexture = $"{assetPath.NormalizePath()}_normal.png",
 			PackedTexture = $"{assetPath.NormalizePath()}_packed.png"

@@ -17,8 +17,11 @@ public class TaskPool<T>
 			batchSize = 1;
 
 		var batched = queue
-			.Select( ( value, index ) => new {
-				Value = value, Index = index } )
+			.Select( ( value, index ) => new
+			{
+				Value = value,
+				Index = index
+			} )
 			.GroupBy( p => p.Index / batchSize )
 			.Select( g => g.Select( p => p.Value ).ToList() )
 			.ToList();

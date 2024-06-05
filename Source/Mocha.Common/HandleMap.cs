@@ -10,6 +10,6 @@ public class HandleMap<T> : List<T>
 	public new Handle Add( T value )
 	{
 		base.Add( value );
-		return new Handle( (uint)( Count - 1 ) );
+		return new Handle( (uint)(Count - 1) );
 	}
 }

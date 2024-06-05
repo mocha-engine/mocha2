@@ -6,12 +6,12 @@
 public interface IConsoleSystem
 {
 	public static IConsoleSystem? Current { get; set; }
-	
+
 	/// <summary>
 	/// Initialise the console system.
 	/// </summary>
 	void Init();
-	
+
 	/// <summary>
 	/// Log something to the console system.
 	/// </summary>

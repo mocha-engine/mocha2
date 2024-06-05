@@ -14,17 +14,17 @@ public static class PerformanceStats
 		{
 			if ( _timeSinceAverageCalculated > 1 )
 			{
-				AverageDelta = (frameDeltas.Count > 0) ? frameDeltas.Average() : 0;	
+				AverageDelta = (frameDeltas.Count > 0) ? frameDeltas.Average() : 0;
 				frameDeltas.Clear();
 				_timeSinceAverageCalculated = 0;
 
 				OnAverageCalculated?.Invoke();
 			}
-			
+
 			frameDeltas.Add( deltaTime );
 		}
 	}
-	
+
 	private static FrameAverage s_frameAverage = new();
 	public static int AverageFPS
 	{

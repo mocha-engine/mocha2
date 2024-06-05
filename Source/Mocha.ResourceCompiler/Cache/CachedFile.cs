@@ -15,7 +15,7 @@ public class CachedFile
 	public static CachedFile FromFile( string path, bool isThin )
 	{
 		path = FileSystem.ContentSrc.GetRelativePath( path );
-		
+
 		if ( isThin )
 		{
 			return new CachedFile( path );

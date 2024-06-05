@@ -2,11 +2,11 @@
 
 public class Handle
 {
-	public static Handle Invalid => new Handle(uint.MaxValue);
+	public static Handle Invalid => new Handle( uint.MaxValue );
 
 	public uint Value { get; private set; }
 
-	public Handle(uint value)
+	public Handle( uint value )
 	{
 		Value = value;
 	}

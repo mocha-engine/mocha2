@@ -8,11 +8,11 @@ public class FileSystem
 	/// Used to fetch configuration data (usually in TOML format).
 	/// </summary>
 	internal static FileSystem Config { get; } = new FileSystem( "./fs/mocha/config/" );
-	
+
 	public static FileSystem Content { get; } = new FileSystem( GameInfo.Current.FileSystem.MountPaths.Content );
 	internal static FileSystem ContentSrc { get; } = new FileSystem( GameInfo.Current.FileSystem.MountPaths.Source );
 	private string BasePath { get; }
-	
+
 	private List<FileSystemWatcher> _watchers = new();
 
 	public FileSystem( string relativePath )

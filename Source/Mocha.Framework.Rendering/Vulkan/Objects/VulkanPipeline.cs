@@ -72,7 +72,7 @@ internal unsafe class VulkanPipeline : VulkanObject
 			pipelineLayoutInfo.PSetLayouts = setLayoutsPtr;
 			pipelineLayoutInfo.SetLayoutCount = (uint)setLayouts.Count;
 
-			Parent.Vk.CreatePipelineLayout(Parent.Device, ref pipelineLayoutInfo, null, out builder.PipelineLayout );
+			Parent.Vk.CreatePipelineLayout( Parent.Device, ref pipelineLayoutInfo, null, out builder.PipelineLayout );
 			Layout = builder.PipelineLayout;
 		}
 

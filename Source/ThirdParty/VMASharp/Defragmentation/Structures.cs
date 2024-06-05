@@ -8,73 +8,73 @@ using Buffer = Silk.NET.Vulkan.Buffer;
 
 namespace VMASharp.Defragmentation
 {
-    public struct DefragmentationInfo2
-    {
-        public DefragmentationFlags Flags;
+	public struct DefragmentationInfo2
+	{
+		public DefragmentationFlags Flags;
 
-        public Allocation[] Allocations;
+		public Allocation[] Allocations;
 
-        public bool[] AllocationsChanged;
+		public bool[] AllocationsChanged;
 
-        public VulkanMemoryPool[] Pools;
+		public VulkanMemoryPool[] Pools;
 
-        public ulong MaxCPUBytesToMove;
+		public ulong MaxCPUBytesToMove;
 
-        public int MaxCPUAllocationsToMove;
+		public int MaxCPUAllocationsToMove;
 
-        public ulong MaxGPUBytesToMove;
+		public ulong MaxGPUBytesToMove;
 
-        public int MaxGPUAllocationsToMove;
+		public int MaxGPUAllocationsToMove;
 
-        public CommandBuffer CommandBuffer;
-    }
+		public CommandBuffer CommandBuffer;
+	}
 
-    public struct DefragmentationPassMoveInfo
-    {
-        public Allocation Allocation;
+	public struct DefragmentationPassMoveInfo
+	{
+		public Allocation Allocation;
 
-        public DeviceMemory Memory;
+		public DeviceMemory Memory;
 
-        public ulong Offset;
-    }
+		public ulong Offset;
+	}
 
-    public struct DefragmentationInfo
-    {
-        public ulong MaxBytesToMove;
+	public struct DefragmentationInfo
+	{
+		public ulong MaxBytesToMove;
 
-        public int MaxAllocationsToMove;
-    }
+		public int MaxAllocationsToMove;
+	}
 
-    public class DefragmentationStats
-    {
-        public long BytesMoved;
+	public class DefragmentationStats
+	{
+		public long BytesMoved;
 
-        public long BytesFreed;
+		public long BytesFreed;
 
-        public int AllocationsMoved;
+		public int AllocationsMoved;
 
-        public int DeviceMemoryBlocksFreed;
-    }
+		public int DeviceMemoryBlocksFreed;
+	}
 
-    internal struct DefragmentationMove
-    {
-        public int SourceBlockIndex, DestinationBlockIndex;
+	internal struct DefragmentationMove
+	{
+		public int SourceBlockIndex, DestinationBlockIndex;
 
-        public ulong SourceOffset, DestinationOffset, Size;
+		public ulong SourceOffset, DestinationOffset, Size;
 
-        public Allocation Allocation;
+		public Allocation Allocation;
 
-        public VulkanMemoryBlock SourceBlock, DestinationBlock;
-    }
+		public VulkanMemoryBlock SourceBlock, DestinationBlock;
+	}
 
-    internal struct BlockDefragmentationContext
-    { 
-        public enum BlockFlags
-        {
-            Used = 0x01
-        }
+	internal struct BlockDefragmentationContext
+	{
+		public enum BlockFlags
+		{
+			Used = 0x01
+		}
 
-        public BlockFlags Flags;
-        public Buffer Buffer;
-    }
+		public BlockFlags Flags;
+		public Buffer Buffer;
+	}
 }

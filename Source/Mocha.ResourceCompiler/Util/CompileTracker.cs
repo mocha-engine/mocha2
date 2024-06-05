@@ -4,7 +4,7 @@ public class CompileTracker
 {
 	private int _successCount = 0;
 	private int _failCount = 0;
-	
+
 	public void IsCompiled( string path )
 	{
 		_successCount++;

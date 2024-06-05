@@ -9,12 +9,12 @@ internal struct Vertex
 	public Vector2 Position = Vector2.Zero;
 	public Vector3 Color = Vector3.Zero;
 
-    public Vertex()
-    {
+	public Vertex()
+	{
 
-    }
+	}
 
-    public static VertexInputBindingDescription GetBindingDescription()
+	public static VertexInputBindingDescription GetBindingDescription()
 	{
 		var bindingDescription = new VertexInputBindingDescription()
 		{

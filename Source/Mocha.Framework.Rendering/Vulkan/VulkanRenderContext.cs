@@ -149,9 +149,10 @@ internal unsafe partial class VulkanRenderContext : IRenderContext
 
 		var fbSize = _window?.FramebufferSize ?? new Vector2Int( 1, 1 );
 
-		var renderInfo = VKInit.RenderingInfo( &colorAttachmentInfo, &depthAtachmentInfo, new Extent2D() { 
+		var renderInfo = VKInit.RenderingInfo( &colorAttachmentInfo, &depthAtachmentInfo, new Extent2D()
+		{
 			Width = (uint)fbSize.X,
-			Height = (uint)fbSize.Y 
+			Height = (uint)fbSize.Y
 		} );
 
 		Vk.CmdBeginRendering( cmd, ref renderInfo );
@@ -664,11 +665,11 @@ internal unsafe partial class VulkanRenderContext : IRenderContext
 		Swapchain = new VulkanSwapchain( this, size );
 
 		_window.OnResize += () =>
-        {
-            var fbSize = _window.FramebufferSize ?? new Vector2Int(1, 1);
-            var size = new Size2D((uint)fbSize.X, (uint)fbSize.Y);
+		{
+			var fbSize = _window.FramebufferSize ?? new Vector2Int( 1, 1 );
+			var size = new Size2D( (uint)fbSize.X, (uint)fbSize.Y );
 
-            Swapchain.Update( size );
+			Swapchain.Update( size );
 			CreateRenderTargets();
 		};
 	}

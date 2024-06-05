@@ -46,7 +46,7 @@ public interface IRenderContext
 	RenderStatus CreateRenderTexture( RenderTextureInfo info, out Handle handle );
 	RenderStatus SetImageTextureData( Handle handle, TextureData textureData );
 	RenderStatus CopyImageTexture( Handle handle, TextureCopyData textureCopyData );
-	
+
 	RenderStatus CreateBuffer( BufferInfo info, out Handle handle );
 	RenderStatus CreateVertexBuffer( BufferInfo info, out Handle handle );
 	RenderStatus CreateIndexBuffer( BufferInfo info, out Handle handle );

@@ -34,7 +34,7 @@ public class ShaderCompiler : IAssetCompiler
 		//
 		var compileOptions = new GlslCompileOptions( false );
 		SpirvCompilationResult? compilationResult = null;
-		
+
 		try
 		{
 			compilationResult = SpirvCompilation.CompileGlslToSpirv( shaderSource, $"{debugName}_{shaderStage}.glsl", shaderStage, compileOptions );

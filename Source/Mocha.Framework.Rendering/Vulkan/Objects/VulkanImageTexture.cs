@@ -33,7 +33,7 @@ internal unsafe class VulkanImageTexture : VulkanObject
 	{
 		GetMipDimensions( inWidth, inHeight, mipLevel, out uint outWidth, out uint outHeight );
 		if ( format == Format.BC3SrgbBlock || format == Format.BC3UnormBlock ||
-		     format == Format.BC5UnormBlock || format == Format.BC5SNormBlock )
+			 format == Format.BC5UnormBlock || format == Format.BC5SNormBlock )
 		{
 			outWidth = Math.Max( outWidth, 4 );
 			outHeight = Math.Max( outHeight, 4 );

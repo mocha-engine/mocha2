@@ -126,9 +126,9 @@ public static class ResourceCompiler
 			if ( result.WasSuccess )
 			{
 				var destPath = file.Path.NormalizePath();
-				destPath = destPath[..destPath.IndexOf(".")];
+				destPath = destPath[..destPath.IndexOf( "." )];
 				destPath += compilerAttribute!.OutputExtension;
-				
+
 				FileSystem.Content.CreateDirectory( Path.GetDirectoryName( destPath )?.NormalizePath() ?? "" );
 				FileSystem.Content.WriteAllBytes( destPath, result!.CompileData! );
 

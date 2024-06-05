@@ -184,7 +184,7 @@ public partial struct Rotation : IEquatable<Rotation>
 	{
 		var upDir = up ?? Vector3.Up;
 		forward = Vector3.OrthoNormalize( forward, upDir );
-		
+
 		var right = Vector3.Cross( upDir, forward );
 
 		Rotation rot = new();

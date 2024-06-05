@@ -2,13 +2,13 @@
 
 public class BaseBuffer : RenderObject
 {
-	public BaseBuffer(BufferInfo info)
+	public BaseBuffer( BufferInfo info )
 	{
-		IRenderContext.Current.CreateBuffer(info, out Handle);
+		IRenderContext.Current.CreateBuffer( info, out Handle );
 	}
 
-	public void Upload(BufferUploadInfo uploadInfo)
+	public void Upload( BufferUploadInfo uploadInfo )
 	{
-		IRenderContext.Current.UploadBuffer(Handle, uploadInfo);
+		IRenderContext.Current.UploadBuffer( Handle, uploadInfo );
 	}
 }

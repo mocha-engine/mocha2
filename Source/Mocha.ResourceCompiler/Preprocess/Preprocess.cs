@@ -29,7 +29,7 @@ public static class Preprocessor
 	}
 
 	public static void Run( string rootDir )
-	{		
+	{
 		string filePath = Path.Combine( rootDir, "preprocess.json" );
 
 		if ( !File.Exists( filePath ) )
@@ -40,7 +40,7 @@ public static class Preprocessor
 
 		foreach ( var item in list )
 		{
-			if (item.Preprocessor is null || item.Folder is null || item.Destination is null)
+			if ( item.Preprocessor is null || item.Folder is null || item.Destination is null )
 				continue;
 
 			if ( !Preprocessors.TryGetValue( item.Preprocessor, out var preprocessorType ) )

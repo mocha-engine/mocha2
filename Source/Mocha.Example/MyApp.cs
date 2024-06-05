@@ -10,26 +10,10 @@ public class MyApp : MochaApplication
 
 	private readonly float[] _vertices = [
 		// vec2 pos,	vec3 color
-		-1,
-		-1,
-		0,
-		0,
-		1,
-		1,
-		-1,
-		0,
-		1,
-		1,
-		1,
-		1,
-		1,
-		1,
-		0,
-		-1,
-		1,
-		1,
-		0,
-		0
+		-1,-1,			0,0,1,
+		1,-1,			0,1,1,
+		1,1,			1,1,0,
+		-1,1,			1,0,0
 	];
 
 	private readonly uint[] _indices = [0, 1, 2, 2, 3, 0];

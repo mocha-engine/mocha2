@@ -7,5 +7,5 @@ public record TextureData
 	public uint MipCount = 1;
 
 	public byte[] MipData = null!;
-	public int ImageFormat = 0;
+	public TextureFormat ImageFormat = 0;
 }

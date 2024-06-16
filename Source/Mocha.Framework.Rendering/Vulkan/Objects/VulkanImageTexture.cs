@@ -89,12 +89,26 @@ internal unsafe class VulkanImageTexture : VulkanObject
 		TextureInfo = textureInfo;
 	}
 
+	private Format GetVulkanFormat( TextureFormat format )
+	{
+		switch ( format )
+		{
+			case TextureFormat.Rgb24:
+				return Format.R8G8B8Unorm;
+			case TextureFormat.Rgba32:
+				return Format.R8G8B8A8Unorm;
+			case TextureFormat.Bc3:
+				return Format.BC3UnormBlock;
+			default:
+				throw new ArgumentOutOfRangeException( nameof( format ), format, null );
+		}
+	}
+
 	public void SetData( TextureData textureData )
 	{
-		// Destroy old image
-		Delete();
+		Delete(); // Destroy old image
 
-		Format imageFormat = (Format)textureData.ImageFormat;
+		Format imageFormat = GetVulkanFormat( textureData.ImageFormat );
 		uint imageSize = 0;
 
 		for ( uint i = 0; i < textureData.MipCount; ++i )
@@ -111,10 +125,9 @@ internal unsafe class VulkanImageTexture : VulkanObject
 		Parent.CreateBuffer( bufferInfo, out bufferHandle );
 
 		VulkanBuffer stagingBuffer = Parent.Buffers.Get( bufferHandle );
-
-		var mappedData = stagingBuffer.allocation.Map();
-		Marshal.Copy( textureData.MipData, 0, mappedData, textureData.MipData.Length );
-		stagingBuffer.allocation.Unmap();
+		BufferUploadInfo bufferUploadInfo = new();
+		bufferUploadInfo.Data = textureData.MipData;
+		stagingBuffer.Upload( bufferUploadInfo );
 
 		Extent3D imageExtent = new( textureData.Width, textureData.Height, 1 );
 
@@ -249,7 +262,7 @@ internal unsafe class VulkanImageTexture : VulkanObject
 	public override void Delete()
 	{
 		Parent.Vk.DestroyImageView( Parent.Device, ImageView, null );
-		Allocation.Dispose();
+		Allocation?.Dispose();
 		Parent.Vk.DestroyImage( Parent.Device, Image, null );
 	}
 }

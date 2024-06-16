@@ -884,7 +884,7 @@ internal unsafe partial class VulkanRenderContext : IRenderContext
 	public RenderStatus BindDescriptor( Descriptor d )
 	{
 		var descriptor = Descriptors.Get( d.Handle );
-		Vk.CmdBindDescriptorSets( _mainContext.CommandBuffer, PipelineBindPoint.Graphics, Pipeline.Layout, 0, 0, ref descriptor.DescriptorSet, 0, null );
+		Vk.CmdBindDescriptorSets( _mainContext.CommandBuffer, PipelineBindPoint.Graphics, Pipeline.Layout, 0, 1, ref descriptor.DescriptorSet, 0, null );
 
 		return RenderStatus.Ok;
 	}

@@ -2,6 +2,7 @@
   "profiles": {
     "mocha.example": {
       "commandName": "Project",
+      "commandLineArgs": "--renderdoc",
       "workingDirectory": "$(SolutionDir)mocha.example\\"
     }
   }

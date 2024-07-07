@@ -5,14 +5,28 @@
     <a href="https://github.com/mocha-engine/mocha2/issues"><img alt="GitHub issues" src="https://img.shields.io/github/issues/mocha-engine/mocha2"></a>
     <br>
     <img src="https://github.com/mocha-engine/mocha2/actions/workflows/ci.yml/badge.svg" />
-    <img src="https://github.com/mocha-engine/mocha2/actions/workflows/ci-linux.yml/badge.svg" />
 </p>
 
-Mocha is a software framework.
+Mocha is a software framework for apps and games.
 
 ## Building the Engine
 
 TODO
+
+## Platforms
+
+| Platform | Support Status |
+|----------|----------------|
+| Windows  | ✅ Supported    |
+| macOS    | 🚧 Planned      |
+| iOS      | 🚧 Planned      |
+| Linux    | ❌ Not Planned  |
+| Android  | ❌ Not Planned  |
+
+Legend:
+- ✅ Supported: Currently supported platform
+- 🚧 Planned: Support is planned for future releases
+- ❌ Not Planned: No current plans for support
 
 ## Contributing
 

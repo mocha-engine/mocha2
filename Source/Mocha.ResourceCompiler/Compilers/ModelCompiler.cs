@@ -1,6 +1,4 @@
-﻿using BCnEncoder.Encoder;
-
-namespace Mocha.ResourceCompiler;
+﻿namespace Mocha.ResourceCompiler;
 
 [Compiler( new[] { ".model.json" }, ".model" )]
 public class ModelCompiler : IAssetCompiler

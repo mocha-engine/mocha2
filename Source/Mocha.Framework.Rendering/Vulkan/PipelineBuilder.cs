@@ -15,7 +15,7 @@ internal unsafe class PipelineBuilder
 
 	public PipelineDepthStencilStateCreateInfo DepthStencil = new();
 
-	public Silk.NET.Vulkan.Pipeline Build( VulkanRenderContext Parent, Device device, Format depthFormat, Format colorFormat )
+	public Silk.NET.Vulkan.Pipeline Build( VulkanRenderContext Parent, Device device, Format depthFormat, VulkanRenderTexture renderTexture )
 	{
 		PipelineViewportStateCreateInfo viewportState = new()
 		{
@@ -27,13 +27,13 @@ internal unsafe class PipelineBuilder
 		{
 			X = 0,
 			Y = 0,
-			Width = 1280,
-			Height = 720,
+			Width = renderTexture.Size.Width,
+			Height = renderTexture.Size.Height,
 			MinDepth = 0,
 			MaxDepth = 1
 		};
 
-		Rect2D scissor = new( new( 0, 0 ), new( 1280, 720 ) );
+		Rect2D scissor = new( new( 0, 0 ), new( renderTexture.Size.Width, renderTexture.Size.Height ) );
 
 		viewportState.ViewportCount = 1;
 		viewportState.PViewports = &viewport;
@@ -63,12 +63,14 @@ internal unsafe class PipelineBuilder
 				PAttachments = &colorBlendAttachment
 			};
 
+			var format = renderTexture.Format;
+
 			PipelineRenderingCreateInfo pipelineCreate = new()
 			{
 				SType = StructureType.PipelineRenderingCreateInfo,
 				PNext = null,
 				ColorAttachmentCount = 1,
-				PColorAttachmentFormats = &colorFormat,
+				PColorAttachmentFormats = &format,
 				DepthAttachmentFormat = depthFormat,
 				StencilAttachmentFormat = depthFormat
 			};

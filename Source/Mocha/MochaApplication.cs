@@ -4,8 +4,8 @@ namespace Mocha;
 
 public class MochaApplication : IDisposable
 {
-	private int _width = 1280;
-	private int _height = 720;
+	private int _width = 1920;
+	private int _height = 1080;
 
 	protected string Name = "My Mocha App";
 	public string Icon = "";

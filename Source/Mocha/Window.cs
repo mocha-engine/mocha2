@@ -5,7 +5,6 @@ using Silk.NET.Windowing;
 using SixLabors.ImageSharp;
 using SixLabors.ImageSharp.Advanced;
 using SixLabors.ImageSharp.PixelFormats;
-using System.Diagnostics;
 using System.Runtime.InteropServices;
 
 namespace Mocha;
@@ -14,23 +13,23 @@ internal unsafe class Window : IDisposable, IWindow
 {
 	private string _title = "My Window";
 
-	private readonly int _width = 1280;
-	private readonly int _height = 720;
+	private readonly int _width = 1920;
+	private readonly int _height = 1080;
 	private Silk.NET.Windowing.IWindow? _window;
 
 	public IVkSurface? VkSurface => _window?.VkSurface;
 	public Vector2Int? FramebufferSize => _window?.FramebufferSize;
 	internal Action<double>? Render;
-	internal nint NativeHandle => Process.GetCurrentProcess().MainWindowHandle; // what the FUCK
+	internal nint NativeHandle => _window.Handle;
 	internal string Title => _window?.Title ?? "No title";
 
 	public event Action? OnResize;
 
-	internal Window( CurrentPlatformInfo platform, string title, int width, int height, string? icon = null )
+	internal Window( CurrentPlatformInfo platform, string title, int initialWidth, int initialHeight, string? icon = null )
 	{
 		_title = title;
-		_width = width;
-		_height = height;
+		_width = initialWidth;
+		_height = initialHeight;
 
 		InitWindow( platform );
 

@@ -45,10 +45,24 @@ internal unsafe class VulkanPipeline : VulkanObject
 	public Silk.NET.Vulkan.Pipeline Pipeline;
 	public Silk.NET.Vulkan.PipelineLayout Layout;
 
+	private PipelineInfo _pipelineInfo;
+
 	public VulkanPipeline() { }
 	public VulkanPipeline( VulkanRenderContext parent, PipelineInfo pipelineInfo )
 	{
 		SetParent( parent );
+
+		_pipelineInfo = pipelineInfo;
+
+		Create();
+	}
+
+	public void Create()
+	{
+		if ( Pipeline.Handle != 0 )
+		{
+			Delete();
+		}
 
 		PipelineBuilder builder = new();
 		var pipelineLayoutInfo = VKInit.PipelineLayoutCreateInfo();
@@ -61,7 +75,7 @@ internal unsafe class VulkanPipeline : VulkanObject
 
 		var setLayouts = new List<DescriptorSetLayout>();
 
-		foreach ( var descriptor in pipelineInfo.Descriptors )
+		foreach ( var descriptor in _pipelineInfo.Descriptors )
 		{
 			var vkDescriptor = Parent.Descriptors.Get( descriptor.Handle );
 			setLayouts.Add( vkDescriptor.DescriptorSetLayout );
@@ -80,7 +94,7 @@ internal unsafe class VulkanPipeline : VulkanObject
 		builder.Multisampling = VKInit.PipelineMultisampleStateCreateInfo();
 		builder.ColorBlendAttachment = VKInit.PipelineColorBlendAttachmentState();
 
-		var shader = new VulkanShader( Parent, pipelineInfo.ShaderInfo );
+		var shader = new VulkanShader( Parent, _pipelineInfo.ShaderInfo );
 		var shaderStages = new List<PipelineShaderStageCreateInfo>();
 
 		shaderStages.Add( VKInit.PipelineShaderStageCreateInfo( ShaderStageFlags.VertexBit, shader.VertexShader ) );
@@ -89,9 +103,9 @@ internal unsafe class VulkanPipeline : VulkanObject
 		builder.ShaderStages = shaderStages.ToArray();
 
 		uint stride = 0;
-		for ( int i = 0; i < pipelineInfo.VertexAttributes.Count; i++ )
+		for ( int i = 0; i < _pipelineInfo.VertexAttributes.Count; i++ )
 		{
-			stride += GetSizeOf( (VertexAttributeFormat)pipelineInfo.VertexAttributes[i].Format );
+			stride += GetSizeOf( (VertexAttributeFormat)_pipelineInfo.VertexAttributes[i].Format );
 		}
 
 		VulkanVertexInputDescription description = new();
@@ -106,9 +120,9 @@ internal unsafe class VulkanPipeline : VulkanObject
 
 		uint offset = 0;
 
-		for ( int i = 0; i < pipelineInfo.VertexAttributes.Count; ++i )
+		for ( int i = 0; i < _pipelineInfo.VertexAttributes.Count; ++i )
 		{
-			var attribute = pipelineInfo.VertexAttributes[i];
+			var attribute = _pipelineInfo.VertexAttributes[i];
 
 			VertexInputAttributeDescription positionAttribute = new();
 			positionAttribute.Binding = 0;
@@ -133,17 +147,17 @@ internal unsafe class VulkanPipeline : VulkanObject
 				builder.VertexInputInfo.VertexBindingDescriptionCount = (uint)description.Bindings.Count;
 
 				builder.InputAssembly = VKInit.PipelineInputAssemblyStateCreateInfo( PrimitiveTopology.TriangleList );
-				builder.DepthStencil = VKInit.DepthStencilCreateInfo( !pipelineInfo.IgnoreDepth, !pipelineInfo.IgnoreDepth, CompareOp.LessOrEqual );
+				builder.DepthStencil = VKInit.DepthStencilCreateInfo( !_pipelineInfo.IgnoreDepth, !_pipelineInfo.IgnoreDepth, CompareOp.LessOrEqual );
 			}
 		}
 
-		if ( pipelineInfo.RenderToSwapchain )
+		if ( _pipelineInfo.RenderToSwapchain )
 		{
-			Pipeline = builder.Build( Parent, Parent.Device, Format.D32SfloatS8Uint, Parent.ColorTarget.Format );
+			Pipeline = builder.Build( Parent, Parent.Device, Format.D32SfloatS8Uint, Parent.ColorTarget );
 		}
 		else
 		{
-			Pipeline = builder.Build( Parent, Parent.Device, Parent.DepthTarget.Format, Parent.ColorTarget.Format );
+			Pipeline = builder.Build( Parent, Parent.Device, Parent.DepthTarget.Format, Parent.ColorTarget );
 		}
 	}
 

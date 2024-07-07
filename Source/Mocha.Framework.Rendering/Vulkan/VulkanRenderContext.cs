@@ -59,6 +59,8 @@ internal unsafe partial class VulkanRenderContext : IRenderContext
 
 	private VulkanPipeline Pipeline = null!;
 
+	private bool _swapchainIsDirty = false;
+
 	public static void VkCheck( Result result )
 	{
 		if ( result != Result.Success )
@@ -94,6 +96,14 @@ internal unsafe partial class VulkanRenderContext : IRenderContext
 		createInfo.PfnUserCallback = (PfnDebugUtilsMessengerCallbackEXT)DebugCallback;
 	}
 
+	private void RecreatePipelines()
+	{
+		foreach ( var pipeline in Pipelines )
+		{
+			pipeline.Create();
+		}
+	}
+
 	private uint SwapchainImageIndex = 0;
 	private VulkanRenderTexture SwapchainTarget = null!;
 
@@ -103,6 +113,18 @@ internal unsafe partial class VulkanRenderContext : IRenderContext
 		{
 			Log.Error( $"{nameof( BeginRendering )} called more than once before {nameof( EndRendering )}!" );
 			return RenderStatus.BeginEndMismatch;
+		}
+
+		if ( _swapchainIsDirty )
+		{
+			var newSize = _window.FramebufferSize ?? new Vector2Int( 1, 1 );
+			var size = new Size2D( (uint)newSize.X, (uint)newSize.Y );
+
+			Swapchain.Update( size );
+			CreateRenderTargets();
+			RecreatePipelines();
+
+			_swapchainIsDirty = false;
 		}
 
 		// _window.Show();
@@ -666,11 +688,7 @@ internal unsafe partial class VulkanRenderContext : IRenderContext
 
 		_window.OnResize += () =>
 		{
-			var fbSize = _window.FramebufferSize ?? new Vector2Int( 1, 1 );
-			var size = new Size2D( (uint)fbSize.X, (uint)fbSize.Y );
-
-			Swapchain.Update( size );
-			CreateRenderTargets();
+			_swapchainIsDirty = true;
 		};
 	}
 

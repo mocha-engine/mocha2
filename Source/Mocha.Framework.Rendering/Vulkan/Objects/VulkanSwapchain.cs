@@ -225,11 +225,20 @@ internal unsafe class VulkanSwapchain : VulkanObject
 
 	public void Update( Size2D newSize )
 	{
+		Delete();
+
 		CreateMainSwapchain( newSize );
 	}
 
 	public override void Delete()
 	{
-		// todo
+		foreach ( var texture in SwapchainTextures )
+		{
+			Parent.Vk.DestroyImageView( Parent.Device, texture.ImageView, null );
+		}
+
+		Parent.SwapchainExtension.DestroySwapchain( Parent.Device, Swapchain, null );
+
+		SwapchainTextures.Clear();
 	}
 }

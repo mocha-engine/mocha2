@@ -104,6 +104,8 @@ internal unsafe partial class VulkanRenderContext : IRenderContext
 		}
 	}
 
+	private bool IsMinimized => _window.FramebufferSize?.X == 0 || _window.FramebufferSize?.Y == 0;
+
 	private uint SwapchainImageIndex = 0;
 	private VulkanRenderTexture SwapchainTarget = null!;
 
@@ -113,6 +115,11 @@ internal unsafe partial class VulkanRenderContext : IRenderContext
 		{
 			Log.Error( $"{nameof( BeginRendering )} called more than once before {nameof( EndRendering )}!" );
 			return RenderStatus.BeginEndMismatch;
+		}
+
+		if ( IsMinimized )
+		{
+			return RenderStatus.WindowMinimized;
 		}
 
 		if ( _swapchainIsDirty )
@@ -191,6 +198,11 @@ internal unsafe partial class VulkanRenderContext : IRenderContext
 		{
 			Log.Error( $"{nameof( EndRendering )} called more than once before {nameof( BeginRendering )}!" );
 			return RenderStatus.BeginEndMismatch;
+		}
+
+		if ( IsMinimized )
+		{
+			return RenderStatus.WindowMinimized;
 		}
 
 		var cmd = _mainContext.CommandBuffer;
@@ -946,6 +958,9 @@ internal unsafe partial class VulkanRenderContext : IRenderContext
 
 	public RenderStatus Draw( int vertexCount, int indexCount, int instanceCount )
 	{
+		if ( IsMinimized )
+			return RenderStatus.WindowMinimized;
+
 		Vk.CmdDrawIndexed( _mainContext.CommandBuffer, (uint)indexCount, (uint)instanceCount, 0, 0, 0 );
 
 		return RenderStatus.Ok;
@@ -953,6 +968,9 @@ internal unsafe partial class VulkanRenderContext : IRenderContext
 
 	public RenderStatus BindRenderTarget( RenderTexture rt )
 	{
+		if ( IsMinimized )
+			return RenderStatus.WindowMinimized;
+
 		if ( IsRenderPassActive )
 		{
 			Vk.CmdEndRendering( _mainContext.CommandBuffer );

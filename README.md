@@ -1,15 +1,14 @@
 <p align="center">
-    <img src="https://github.com/mocha-engine/mocha2/assets/12881812/21c0706a-9aee-4214-8a70-02d30279f441" />
+    <img src="https://github.com/user-attachments/assets/ae7cc7b0-953c-419b-add9-33b1cdcc859b" width="512" />
     <br>
     <a href="https://discord.gg/g46tgkqZPC"><img alt="Discord" src="https://img.shields.io/discord/1051715074043150336"></a>
     <a href="https://github.com/mocha-engine/mocha2/issues"><img alt="GitHub issues" src="https://img.shields.io/github/issues/mocha-engine/mocha2"></a>
-    <br>
     <img src="https://github.com/mocha-engine/mocha2/actions/workflows/ci.yml/badge.svg" />
+    <br>
+    Mocha is a software framework for apps and games.
 </p>
 
-Mocha is a software framework for apps and games.
-
-## Building the Engine
+## Building
 
 TODO
 
@@ -30,7 +29,7 @@ Legend:
 
 ## Contributing
 
-We welcome contributions! To contribute to Mocha, please:
+We welcome contributions! To contribute, please:
 
 1. Fork the repository.
 2. Create a branch named `YourName/FeatureName` for your feature or fix.

@@ -1,6 +1,6 @@
 using Silk.NET.Vulkan;
 
-namespace Mocha.Rendering.Vulkan;
+namespace Apparatus.Core.Rendering.Vulkan;
 
 internal unsafe class VulkanShader : VulkanObject
 {

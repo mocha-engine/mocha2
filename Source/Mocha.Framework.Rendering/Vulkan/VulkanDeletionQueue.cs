@@ -1,7 +1,7 @@
 ﻿
-namespace Mocha.Rendering.Vulkan;
+namespace Apparatus.Core.Rendering.Vulkan;
 
-class VulkanDeletionQueue
+internal class VulkanDeletionQueue
 {
 	public Queue<Action> Queue;
 

@@ -17,7 +17,8 @@ using System.Runtime.InteropServices;
 
 [assembly: Guid( "b162587c-2030-43f3-ae89-1160c8a692ae" )]
 
-[assembly: InternalsVisibleTo( "mocha.resourcecompiler" )]
-[assembly: InternalsVisibleTo( "mocha" )]
-[assembly: InternalsVisibleTo( "mocha.pbrconvert" )]
-[assembly: InternalsVisibleTo( "mocha.console" )]
+[assembly: InternalsVisibleTo( "Apparatus.Core.AppFramework" )]
+[assembly: InternalsVisibleTo( "Apparatus.Core.Genreators" )]
+[assembly: InternalsVisibleTo( "Apparatus.Core.Rendering" )]
+[assembly: InternalsVisibleTo( "Mocha.ResourceCompiler" )]
+[assembly: InternalsVisibleTo( "Mocha" )]

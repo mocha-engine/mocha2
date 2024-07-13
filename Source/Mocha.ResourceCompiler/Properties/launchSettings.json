@@ -1,6 +1,6 @@
 {
   "profiles": {
-    "mocha.resourcecompiler": {
+    "Compile Resources in Mocha.Example/": {
       "commandName": "Project",
       "commandLineArgs": "--preprocess",
       "workingDirectory": "$(SolutionDir)Mocha.Example"

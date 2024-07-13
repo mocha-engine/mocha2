@@ -2,7 +2,7 @@
 using System.Runtime.CompilerServices;
 using System.Runtime.InteropServices;
 
-namespace Mocha.Rendering.Vulkan;
+namespace Apparatus.Core.Rendering.Vulkan;
 
 internal struct Vertex
 {

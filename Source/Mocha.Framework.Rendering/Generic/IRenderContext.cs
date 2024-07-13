@@ -1,6 +1,6 @@
-﻿using Mocha.Rendering.Vulkan;
+﻿using Apparatus.Core.Rendering.Vulkan;
 
-namespace Mocha.Rendering;
+namespace Apparatus.Core.Rendering;
 
 public interface IRenderContext
 {

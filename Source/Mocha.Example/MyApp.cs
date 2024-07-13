@@ -1,5 +1,4 @@
-﻿using Mocha;
-using Mocha.Rendering;
+﻿using Apparatus.Core.Rendering;
 
 public class MyApp : MochaApplication
 {
@@ -62,7 +61,7 @@ public class MyApp : MochaApplication
 			Name = "test.texture"
 		} );
 
-		_imageTexture.SetData( new Mocha.Rendering.TextureData()
+		_imageTexture.SetData( new Apparatus.Core.Rendering.TextureData()
 		{
 			Width = image.Width,
 			Height = image.Height,

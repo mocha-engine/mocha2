@@ -1,6 +1,6 @@
 ﻿using System.Drawing;
 
-namespace Mocha.Rendering;
+namespace Apparatus.Core.Rendering;
 
 [Obsolete]
 internal interface IRenderingBackend : IDisposable

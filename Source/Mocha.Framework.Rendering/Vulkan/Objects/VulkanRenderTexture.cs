@@ -1,7 +1,7 @@
 using Silk.NET.Vulkan;
 using VMASharp;
 
-namespace Mocha.Rendering.Vulkan;
+namespace Apparatus.Core.Rendering.Vulkan;
 
 internal unsafe class VulkanRenderTexture : VulkanObject
 {

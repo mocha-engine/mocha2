@@ -1,4 +1,4 @@
-namespace Mocha.Rendering;
+namespace Apparatus.Core.Rendering;
 
 public record VertexAttributeInfo
 {

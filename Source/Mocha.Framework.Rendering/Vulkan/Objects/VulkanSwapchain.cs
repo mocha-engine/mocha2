@@ -2,7 +2,7 @@ using Silk.NET.Vulkan;
 using Silk.NET.Vulkan.Extensions.KHR;
 using Semaphore = Silk.NET.Vulkan.Semaphore;
 
-namespace Mocha.Rendering.Vulkan;
+namespace Apparatus.Core.Rendering.Vulkan;
 
 internal unsafe class VulkanSwapchain : VulkanObject
 {

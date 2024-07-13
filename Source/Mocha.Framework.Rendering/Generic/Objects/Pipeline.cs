@@ -1,4 +1,4 @@
-﻿namespace Mocha.Rendering;
+﻿namespace Apparatus.Core.Rendering;
 
 public class Pipeline : RenderObject
 {

@@ -3,7 +3,7 @@ using Silk.NET.Vulkan;
 using VMASharp;
 using Buffer = Silk.NET.Vulkan.Buffer;
 
-namespace Mocha.Rendering.Vulkan;
+namespace Apparatus.Core.Rendering.Vulkan;
 
 internal unsafe class VulkanBuffer : VulkanObject
 {

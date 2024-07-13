@@ -17,7 +17,7 @@ global using System.Threading.Tasks;
 
 global using static Globals;
 
-using Mocha.Rendering;
+using Apparatus.Core.Rendering;
 
 public static class Globals
 {

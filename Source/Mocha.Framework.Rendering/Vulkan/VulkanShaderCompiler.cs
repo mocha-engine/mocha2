@@ -2,12 +2,12 @@
 using Veldrid;
 using Veldrid.SPIRV;
 
-namespace Mocha.Rendering;
+namespace Apparatus.Core.Rendering;
 
 public record struct VulkanShaderInfo( byte[] Vertex, byte[] Fragment );
 public record struct VulkanShaderSources( string Vertex, string Fragment );
 
-public static class VulkanShaderCompiler
+internal static class VulkanShaderCompiler
 {
 	private static byte[] CompileShader( string shaderSource, ShaderStages shaderStage, string debugName = "temp" )
 	{

@@ -1,8 +1,7 @@
 {
   "profiles": {
-    "mocha.example": {
+    "Mocha": {
       "commandName": "Project",
-      "commandLineArgs": "--renderdoc",
       "workingDirectory": "$(SolutionDir)mocha.example\\"
     }
   }

@@ -22,8 +22,8 @@
 	</ItemGroup>
 
 	<ItemGroup>
-		<ProjectReference Include="..\Mocha.Common\Mocha.Common.csproj" />
-		<ProjectReference Include="..\Mocha.Framework.Rendering\Mocha.Framework.Rendering.csproj" />
+		<ProjectReference Include="..\Mocha.Common\Apparatus.Core.Common.csproj" />
+		<ProjectReference Include="..\Mocha.Framework.Rendering\Apparatus.Core.Rendering.csproj" />
 		<ProjectReference Include="..\ThirdParty\VMASharp\VMASharp.csproj" />
 	</ItemGroup>
 
@@ -37,7 +37,7 @@
 	</ItemGroup>
 
 	<ItemGroup>
-		<ProjectReference Include="..\Mocha.Generators\Mocha.Generators.csproj" OutputItemType="Analyzer" ReferenceOutputAssembly="false" />
+		<ProjectReference Include="..\Mocha.Generators\Apparatus.Core.Generators.csproj" OutputItemType="Analyzer" ReferenceOutputAssembly="false" />
 	</ItemGroup>
 
 

@@ -15,7 +15,7 @@ namespace Mocha.Generators
 
 		private const string ResourceAttribute = "Mocha.ResourceAttribute";
 		private const string FileSystemContent = "global::Mocha.FileSystem.Content";
-		private const string FileSystemReadAllTextMethod = "ReadAllText";
+		private const string FileSystemReadAllBytesMethod = "ReadAllBytes";
 
 		public void Initialize( IncrementalGeneratorInitializationContext context )
 		{
@@ -94,8 +94,8 @@ namespace Mocha.Generators
 					writer.WriteLine( "{" );
 					writer.Indent++;
 
-					writer.WriteLine( $"var file = {FileSystemContent}.{FileSystemReadAllTextMethod}( filePath );" );
-					writer.WriteLine( $"return global::System.Text.Json.JsonSerializer.Deserialize<{entry.TypeName}>( file );" );
+					writer.WriteLine( $"var file = {FileSystemContent}.{FileSystemReadAllBytesMethod}( filePath );" );
+					writer.WriteLine( $"return global::Apparatus.Core.Common.Serializer.Deserialize<{entry.TypeName}>( file );" );
 
 					writer.Indent--;
 					writer.WriteLine( "}" );
@@ -115,7 +115,7 @@ namespace Mocha.Generators
 					writer.WriteLine( "{" );
 					writer.Indent++;
 
-					writer.WriteLine( $"return global::System.Text.Json.JsonSerializer.Deserialize<{entry.TypeName}>( data );" );
+					writer.WriteLine( $"return global::Apparatus.Core.Common.Serializer.Deserialize<{entry.TypeName}>( data );" );
 
 					writer.Indent--;
 					writer.WriteLine( "}" );

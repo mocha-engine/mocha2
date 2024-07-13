@@ -116,7 +116,7 @@ public static class PbrTextureConverter
 			PackedTexture = $"{assetPath.NormalizePath()}_packed.png"
 		};
 
-		var fileData = JsonSerializer.Serialize( materialData );
-		File.WriteAllText( destinationPath + ".material.json", fileData );
+		var fileData = Serializer.Serialize( materialData );
+		File.WriteAllBytes( destinationPath + ".material.json", fileData );
 	}
 }

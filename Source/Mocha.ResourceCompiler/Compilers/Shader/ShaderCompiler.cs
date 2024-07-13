@@ -127,6 +127,6 @@ public class ShaderCompiler : IAssetCompiler
 		if ( shaderFile.Fragment != null )
 			shader.FragmentData = await CompileShader( shaderFile.Common, shaderFile.Fragment, ShaderStages.Fragment, debugName );
 
-		return CompileResult.Success( JsonSerializer.SerializeToUtf8Bytes( shader ) );
+		return CompileResult.Success( Serializer.Serialize( shader ) );
 	}
 }

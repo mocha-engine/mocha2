@@ -9,6 +9,8 @@ global using System.Threading.Tasks;
 
 global using static Globals;
 
+global using Apparatus.Core.Common;
+
 public static class Globals
 {
 	public static Logger Log { get; } = new();

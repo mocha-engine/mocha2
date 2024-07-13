@@ -9,11 +9,11 @@ public class MyApp : MochaApplication
 	private ImageTexture _imageTexture = null!;
 
 	private readonly float[] _vertices = [
-		// vec2 pos,	vec3 color		vec2 uv
-		-1,-1,			0,0,1,			0,0,
-		1,-1,			0,1,1,			1,0,
-		1,1,			1,1,0,			1,1,
-		-1,1,			1,0,0,			0,1
+		// vec2 pos,	vec2 uv
+		-1,-1,			0,0,
+		1,-1,			1,0,
+		1,1,			1,1,
+		-1,1,			0,1
 	];
 
 	private readonly uint[] _indices = [0, 1, 2, 2, 3, 0];
@@ -97,7 +97,6 @@ public class MyApp : MochaApplication
 			Descriptors = [_descriptor],
 			VertexAttributes = [
 				new VertexAttributeInfo() { Format = VertexAttributeFormat.Float2, Name = "Position" },
-				new VertexAttributeInfo() { Format = VertexAttributeFormat.Float3, Name = "Color" },
 				new VertexAttributeInfo() { Format = VertexAttributeFormat.Float2, Name = "TexCoord" },
 			]
 		} );

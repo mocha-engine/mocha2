@@ -32,6 +32,6 @@ public class TextureCompiler : IAssetCompiler
 			Format = TextureFormat.Bc3,
 		};
 
-		return CompileResult.Success( JsonSerializer.SerializeToUtf8Bytes( textureData ) );
+		return CompileResult.Success( Serializer.Serialize( textureData ) );
 	}
 }

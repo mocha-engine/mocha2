@@ -16,7 +16,7 @@ public class MaterialCompiler : IAssetCompiler
 			// todo: Process?
 			//
 
-			return CompileResult.Success( JsonSerializer.SerializeToUtf8Bytes( materialData ) );
+			return CompileResult.Success( Serializer.Serialize( materialData ) );
 		} );
 	}
 }

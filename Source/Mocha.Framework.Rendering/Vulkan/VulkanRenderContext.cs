@@ -904,6 +904,9 @@ internal unsafe partial class VulkanRenderContext : IRenderContext
 
 	public RenderStatus BindPipeline( Pipeline p )
 	{
+		if ( IsMinimized )
+			return RenderStatus.WindowMinimized;
+
 		var pipeline = Pipelines.Get( p.Handle );
 		Pipeline = pipeline;
 
@@ -913,6 +916,9 @@ internal unsafe partial class VulkanRenderContext : IRenderContext
 
 	public RenderStatus BindDescriptor( Descriptor d )
 	{
+		if ( IsMinimized )
+			return RenderStatus.WindowMinimized;
+
 		var descriptor = Descriptors.Get( d.Handle );
 		Vk.CmdBindDescriptorSets( _mainContext.CommandBuffer, PipelineBindPoint.Graphics, Pipeline.Layout, 0, 1, ref descriptor.DescriptorSet, 0, null );
 
@@ -921,6 +927,9 @@ internal unsafe partial class VulkanRenderContext : IRenderContext
 
 	public RenderStatus UpdateDescriptor( Descriptor d, DescriptorUpdateInfo updateInfo )
 	{
+		if ( IsMinimized )
+			return RenderStatus.WindowMinimized;
+
 		BindDescriptor( d );
 
 		var descriptor = Descriptors.Get( d.Handle );
@@ -942,6 +951,9 @@ internal unsafe partial class VulkanRenderContext : IRenderContext
 
 	public RenderStatus BindVertexBuffer( VertexBuffer vb )
 	{
+		if ( IsMinimized )
+			return RenderStatus.WindowMinimized;
+
 		var buffer = Buffers.Get( vb.Handle );
 		Vk.CmdBindVertexBuffers( _mainContext.CommandBuffer, 0, [buffer.buffer], [0] );
 
@@ -950,6 +962,9 @@ internal unsafe partial class VulkanRenderContext : IRenderContext
 
 	public RenderStatus BindIndexBuffer( IndexBuffer ib )
 	{
+		if ( IsMinimized )
+			return RenderStatus.WindowMinimized;
+
 		var buffer = Buffers.Get( ib.Handle );
 		Vk.CmdBindIndexBuffer( _mainContext.CommandBuffer, buffer.buffer, 0, IndexType.Uint32 );
 

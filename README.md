@@ -19,7 +19,7 @@ TODO
 | Windows  | ✅ Supported    |
 | macOS    | 🚧 Planned      |
 | iOS      | 🚧 Planned      |
-| Linux    | ❌ Not Planned  |
+| Linux    | 🚧 Planned      |
 | Android  | ❌ Not Planned  |
 
 Legend:

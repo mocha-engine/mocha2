@@ -12,7 +12,7 @@ public enum OperatingSystems
 {
 	Windows,
 	Linux,
-	MacOs,
+	MacOS,
 	Other
 }
 
@@ -40,7 +40,7 @@ public record struct CurrentPlatformInfo( Renderers Renderer, OperatingSystems O
 		else if ( RuntimeInformation.IsOSPlatform( OSPlatform.Linux ) )
 			return OperatingSystems.Linux;
 		else if ( RuntimeInformation.IsOSPlatform( OSPlatform.OSX ) )
-			return OperatingSystems.MacOs;
+			return OperatingSystems.MacOS;
 
 		return OperatingSystems.Other;
 	}

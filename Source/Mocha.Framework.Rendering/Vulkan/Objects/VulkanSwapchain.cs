@@ -148,8 +148,7 @@ internal unsafe class VulkanSwapchain : VulkanObject
 			PreTransform = swapChainSupport.Capabilities.CurrentTransform,
 			CompositeAlpha = CompositeAlphaFlagsKHR.OpaqueBitKhr,
 			PresentMode = presentMode,
-			Clipped = true,
-			OldSwapchain = Swapchain
+			Clipped = true
 		};
 
 		Parent.SwapchainExtension.CreateSwapchain( Parent.Device, ref createInfo, null, out Swapchain );

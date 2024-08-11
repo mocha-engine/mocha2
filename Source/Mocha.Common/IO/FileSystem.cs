@@ -5,7 +5,7 @@ namespace Mocha;
 public class FileSystem
 {
 	/// <summary>
-	/// Used to fetch configuration data (usually in TOML format).
+	/// Used to fetch configuration data (usually in JSON format).
 	/// </summary>
 	internal static FileSystem Config { get; } = new FileSystem( "./fs/mocha/config/" );
 

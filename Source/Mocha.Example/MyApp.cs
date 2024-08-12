@@ -67,7 +67,7 @@ public class MyApp : MochaApplication
 			Height = image.Height,
 			ImageFormat = image.Format,
 			MipCount = image.MipCount,
-			MipData = image.Bytes
+			MipData = image.Data
 		} );
 
 		_descriptor = new Descriptor( new DescriptorInfo()

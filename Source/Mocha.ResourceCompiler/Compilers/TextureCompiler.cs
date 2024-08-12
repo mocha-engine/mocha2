@@ -2,7 +2,6 @@
 using BCnEncoder.ImageSharp;
 using SixLabors.ImageSharp;
 using SixLabors.ImageSharp.PixelFormats;
-using System.Text.Json;
 
 namespace Mocha.ResourceCompiler;
 

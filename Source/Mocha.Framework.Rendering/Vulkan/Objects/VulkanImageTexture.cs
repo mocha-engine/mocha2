@@ -124,9 +124,18 @@ internal unsafe class VulkanImageTexture : VulkanObject
 		Handle bufferHandle;
 		Parent.CreateBuffer( bufferInfo, out bufferHandle );
 
+		var data = new byte[imageSize];
+		var offset = 0u;
+		for ( uint i = 0; i < textureData.MipCount; ++i )
+		{
+			var mipSize = CalcMipSize( textureData.Width, textureData.Height, i, imageFormat );
+			Array.Copy( textureData.MipData[i], 0, data, offset, mipSize );
+			offset += mipSize;
+		}
+
 		VulkanBuffer stagingBuffer = Parent.Buffers.Get( bufferHandle );
 		BufferUploadInfo bufferUploadInfo = new();
-		bufferUploadInfo.Data = textureData.MipData;
+		bufferUploadInfo.Data = data;
 		stagingBuffer.Upload( bufferUploadInfo );
 
 		Extent3D imageExtent = new( textureData.Width, textureData.Height, 1 );

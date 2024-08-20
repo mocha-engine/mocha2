@@ -51,7 +51,7 @@ public class MyApp : MochaApplication
 			Data = _indices.SelectMany( BitConverter.GetBytes ).ToArray()
 		} );
 
-		var image = Mocha.TextureData.Load( "test.texture" );
+		var image = Mocha.TextureData.Load( "textures/test.texture" );
 
 		_imageTexture = new ImageTexture( new ImageTextureInfo()
 		{

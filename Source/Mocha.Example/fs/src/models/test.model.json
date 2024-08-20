@@ -1,0 +1,12 @@
+{
+	"Meshes": [
+		{
+			"Path": "/models/dev_map.fbx"
+		}
+	],
+	"Materials": [
+		{
+			"Path": "/materials/floor.material"
+		}
+	]
+}

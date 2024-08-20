@@ -39,10 +39,11 @@ internal unsafe partial class VulkanRenderContext : IRenderContext
 	[WithProperty] private VulkanRenderTexture _colorTarget = null!;
 
 #if DEBUG
-	string[] _requiredValidationLayers = ["VK_LAYER_KHRONOS_validation"];
+	//string[] _requiredValidationLayers = ["VK_LAYER_KHRONOS_validation"];
 #else
-	string[] _requiredValidationLayers = [];
+	//string[] _requiredValidationLayers = [];
 #endif
+	string[] _requiredValidationLayers = [];
 
 	string[] _deviceExtensions = [KhrSwapchain.ExtensionName];
 	string[] _instanceExtensions = [KhrSurface.ExtensionName, ExtDebugUtils.ExtensionName, KhrWin32Surface.ExtensionName];

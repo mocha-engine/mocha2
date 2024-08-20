@@ -1,14 +1,21 @@
-﻿namespace Mocha.ResourceCompiler;
+﻿using System.Text.Json.Serialization;
+
+namespace Mocha.ResourceCompiler;
 
 public sealed class ModelAsset : AssetMetadata
 {
-	public string? Model { get; set; }
-
-	public sealed class MaterialReference
+	public sealed class Material
 	{
-		public string? Name { get; set; }
-		public string? Path { get; set; }
+		[JsonRequired]
+		public string Path { get; set; } = null!;
 	}
 
-	public List<MaterialReference>? Materials { get; set; }
+	public sealed class Mesh
+	{
+		[JsonRequired]
+		public string Path { get; set; } = null!;
+	}
+
+	public List<Mesh>? Meshes { get; set; } = null;
+	public List<Material>? Materials { get; set; } = null;
 }

@@ -44,7 +44,7 @@ public class FileSystem
 		return Encoding.ASCII.GetString( ReadAllBytes( relativePath ) );
 	}
 
-	[Obsolete( "Use FileHandle" )]
+	[Obsolete( "Use GetHandle( ... )" )]
 	public byte[] ReadAllBytes( string relativePath )
 	{
 		var stream = InternalOpenFile( relativePath );
@@ -52,6 +52,12 @@ public class FileSystem
 		stream.Read( bytes, 0, (int)stream.Length );
 
 		return bytes;
+	}
+
+	public FileHandle GetHandle( string relativePath )
+	{
+		var absolutePath = GetAbsolutePath( relativePath );
+		return new FileHandle( this, absolutePath );
 	}
 
 	public void WriteAllText( string relativePath, string data )

@@ -1,4 +1,3 @@
-using System.Runtime.InteropServices;
 using Silk.NET.Vulkan;
 using VMASharp;
 

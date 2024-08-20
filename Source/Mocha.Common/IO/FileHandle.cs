@@ -8,11 +8,11 @@ public class FileHandle : IDisposable
 	private byte[]? _fileDataCache;
 	private readonly SemaphoreSlim _asyncLock = new SemaphoreSlim( 1, 1 );
 
-	public FileHandle( string path )
+	public FileHandle( FileSystem fs, string path )
 	{
-		if ( string.IsNullOrWhiteSpace( path ) || !FileSystem.Content.Exists( path ) )
+		if ( !fs.Exists( path ) )
 		{
-			throw new ArgumentException( "Path is null, empty or file does not exist.", nameof( path ) );
+			throw new ArgumentException( "Path is null or empty, or file does not exist on filesystem.", nameof( path ) );
 		}
 
 		_filePath = path;
@@ -20,7 +20,7 @@ public class FileHandle : IDisposable
 		var directoryName = Path.GetDirectoryName( path )!;
 		var fileName = Path.GetFileName( path );
 
-		_watcher = FileSystem.Content.Watch( directoryName, fileName, OnFileWatcherChanged, NotifyFilters.LastWrite );
+		_watcher = fs.Watch( directoryName, fileName, OnFileWatcherChanged, NotifyFilters.LastWrite );
 
 		// initialize cache on startup
 		UpdateCache().Wait();
